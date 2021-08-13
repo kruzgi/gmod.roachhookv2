@@ -1824,7 +1824,11 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     end
     
     if(cmd:CommandNumber() == 0) then
-        cmd:SetViewAngles(RoachHook.SilentAimbot)
+        if((RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"])) then
+            cmd:SetViewAngles(RoachHook.AntiAimData.real)
+        else
+            cmd:SetViewAngles(RoachHook.SilentAimbot)
+        end
 
         return
     end
