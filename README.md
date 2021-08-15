@@ -6,7 +6,7 @@
 2. Anti-Aim
 3. Legitbot (WIP)
 4. ESP
-5. Chams (WIP)
+5. Chams
 6. Auto Bunnyhop
 7. Autostrafer (Legit, Directional, Rage)
 8. Circle Strafer
