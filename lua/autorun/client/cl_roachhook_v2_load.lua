@@ -48,7 +48,7 @@ file.CreateDir("roachhook/config")
 file.CreateDir("roachhook/scripts")
 
 RoachHook = RoachHook || {}
-RoachHook.CheatVer = "2.0.4.3"
+RoachHook.CheatVer = "2.0.5.0"
 RoachHook.CheatVerShort = "2"
 RoachHook.Detour = table.Copy(_G)
 RoachHook.Config = RoachHook.Config || {}
@@ -220,7 +220,6 @@ Menu = {}
 
 // Includes
 RoachHook_IncludeFile("roachhook/helpers/helpers.lua")
-RoachHook.WaterSimulation = RoachHook_IncludeFile("roachhook/helpers/water_sim.lua")
 RoachHook.GetPlayerAvatar = RoachHook_IncludeFile("roachhook/helpers/avatar.lua")
 RoachHook_IncludeFile("roachhook/helpers/bsp_parser.lua")
 RoachHook.Circles = RoachHook_IncludeFile("roachhook/helpers/circles.lua")
@@ -1271,7 +1270,6 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     return RoachHook.Config["misc.b_background"]
                 end, true, true, Color(255, 255, 255)),
                 Menu.NewCombo("Menu Background Animation", "misc.b_background.i_selected_bg_anim", {
-                    "Water (!)",
                     "Snow Flakes",
                 }, 1, function()
                     return RoachHook.Config["misc.b_background"] && RoachHook.Config["misc.b_bg_anim"]
@@ -1566,9 +1564,6 @@ RoachHook.Detour.hook.Add("Think", "UpdatePressedKeys", function()
     end
 end)
 
-local snowFlakesData = {}
-local water = RoachHook.WaterSimulation(0, ScrH() - 128, ScrW(), 128, Color(0, 0, 255, 128))
-
 local function GetClosestPositions(x, y, tbl, num)
     local tabl = table.Copy(tbl)
     local num = math.Clamp(num, 0, #tbl)
@@ -1616,26 +1611,9 @@ local function OutlinedPoly(poly)
     end
 end
 
-local lastX, lastY = gui.MouseX(), gui.MouseY()
+local snowFlakesData = {}
 local backgroundAnimations = {
     [1] = function()
-        local mouseX, mouseY = gui.MouseX(), gui.MouseY()
-        local clr = RoachHook.Config["misc.b_bg_anim.color"]
-
-        local dx, dy = mouseX - lastX, mouseY - lastY
-
-        local weight = 3
-        local speed = weight * dy
-        if water:isTouched(mouseX, mouseY, dx, dy) then
-            water:splash(mouseX, speed)
-        end
-
-        water:update()
-        water:draw()
-
-        lastX, lastY = mouseX, mouseY
-    end,
-    [2] = function()
         local clr = RoachHook.Config["misc.b_bg_anim.color"]
 
         for i=0, ScrW() / 5 do
