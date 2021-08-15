@@ -89,7 +89,10 @@ local function Spectators()
         end
     end
 
-    if(szClickedItem == "spec" && RoachHook.bMenuVisible) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "spec" && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         RoachHook.Config["windows.spectators_data"].x = x + RoachHook.Config["windows.spectators_data"].mouseDX
@@ -217,7 +220,10 @@ local function Admins()
         end
     end
 
-    if(szClickedItem == "admin" && RoachHook.bMenuVisible) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "admin" && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         RoachHook.Config["windows.admins_data"].x = x + RoachHook.Config["windows.admins_data"].mouseDX
@@ -338,7 +344,10 @@ local function ACDetection()
         end
     end
 
-    if(szClickedItem == "acdet" && RoachHook.bMenuVisible) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "acdet" && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         RoachHook.Config["windows.acdetect_data"].x = x + RoachHook.Config["windows.acdetect_data"].mouseDX
@@ -440,7 +449,10 @@ local function KeybindState()
         end
     end
 
-    if(szClickedItem == "keys" && RoachHook.bMenuVisible) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "keys" && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         RoachHook.Config["windows.keybindstate_data"].x = x + RoachHook.Config["windows.keybindstate_data"].mouseDX
@@ -560,7 +572,10 @@ local function Indicators()
         end
     end
 
-    if(szClickedItem == "indi" && RoachHook.bMenuVisible) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "indi" && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         RoachHook.Config["windows.indicators_data"].x = x + RoachHook.Config["windows.indicators_data"].mouseDX
@@ -677,7 +692,10 @@ RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
     KeybindState()
     Indicators()
 
-    if(szClickedItem) then
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem && RoachHook.bMenuVisible && !frameHovered) then
         local x, y = gui.MouseX(), gui.MouseY()
 
         surface.SetDrawColor(Color(255, 255, 255, 32))

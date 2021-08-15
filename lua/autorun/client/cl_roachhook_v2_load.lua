@@ -978,7 +978,31 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
         {
             name = "Team Chams",
             items = {
-
+                Menu.NewCheckbox("Enable Team Chams", "player.team.chams.enable", false),
+                Menu.NewCheckbox("Visible Chams", "player.team.chams.visible_chams", false, function()
+                    return RoachHook.Config["player.team.chams.enable"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Visible Material", "player.team.chams.visible_chams.mat", materials, 1, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.visible_chams"]
+                end),
+                Menu.NewCheckbox("Visible Overlay Chams", "player.team.chams.visible_overlay", false, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.visible_chams"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Visible Overlay Material", "player.team.chams.visible_overlay.mat", materials_overlay, 1, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.visible_overlay"]
+                end),
+                Menu.NewCheckbox("Invisible Chams", "player.team.chams.invisible_chams", false, function()
+                    return RoachHook.Config["player.team.chams.enable"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Invisible Material", "player.team.chams.invisible_chams.mat", materials, 1, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.invisible_chams"]
+                end),
+                Menu.NewCheckbox("Invisible Overlay Chams", "player.team.chams.invisible_overlay", false, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.invisible_chams"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Invisible Overlay Material", "player.team.chams.invisible_overlay.mat", materials_overlay, 1, function()
+                    return RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.invisible_overlay"]
+                end),
             }
         },
         {
@@ -1035,7 +1059,31 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
         {
             name = "Enemy Chams",
             items = {
-
+                Menu.NewCheckbox("Enable Enemy Chams", "player.enemy.chams.enable", false),
+                Menu.NewCheckbox("Visible Chams", "player.enemy.chams.visible_chams", false, function()
+                    return RoachHook.Config["player.enemy.chams.enable"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Visible Material", "player.enemy.chams.visible_chams.mat", materials, 1, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.visible_chams"]
+                end),
+                Menu.NewCheckbox("Visible Overlay Chams", "player.enemy.chams.visible_overlay", false, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.visible_chams"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Visible Overlay Material", "player.enemy.chams.visible_overlay.mat", materials_overlay, 1, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.visible_overlay"]
+                end),
+                Menu.NewCheckbox("Invisible Chams", "player.enemy.chams.invisible_chams", false, function()
+                    return RoachHook.Config["player.enemy.chams.enable"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Invisible Material", "player.enemy.chams.invisible_chams.mat", materials, 1, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.invisible_chams"]
+                end),
+                Menu.NewCheckbox("Invisible Overlay Chams", "player.enemy.chams.invisible_overlay", false, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.invisible_chams"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewCombo("Invisible Overlay Material", "player.enemy.chams.invisible_overlay.mat", materials_overlay, 1, function()
+                    return RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.invisible_overlay"]
+                end),
             }
         },
     } },
@@ -1630,6 +1678,7 @@ local function GetAdminsCount()
     end
     return num
 end
+
 local taunts = {
     ACT_GMOD_TAUNT_SALUTE,
     ACT_GMOD_TAUNT_PERSISTENCE,
@@ -1951,8 +2000,16 @@ hook.Add("PostPlayerDraw", "LocalPlayerChamsFix", function(plr)
 end)
 
 local function RenderChams()
-    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
 
+        return
+    end
+
+    -- Local Chams (LocalPlayer Chams, Fake Chams)
     cam.Start3D()
         
         local plr = RoachHook.Detour.LocalPlayer()
@@ -2037,6 +2094,144 @@ local function RenderChams()
         render.SetBlend(1)
         render.MaterialOverride(RoachHook.Materials.chams.none)
         render.SuppressEngineLighting(false)
+
+    cam.End3D()
+    
+    local me = RoachHook.Detour.LocalPlayer()
+    
+    -- Invisible Chams
+    cam.Start3D()
+
+        cam.IgnoreZ(true)
+
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+
+            if(v == me) then continue end
+                
+            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
+                local clr = RoachHook.Config["player.team.chams.invisible_chams.color"]
+                local mat = RoachHook.Config["player.team.chams.invisible_chams.mat"]
+
+                render.MaterialOverride(mats[mat])
+                render.SuppressEngineLighting(mat == 3)
+                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                render.SetBlend((clr.a - 0.01) / 255)
+
+                v:SetColor(Color(255, 255, 255, 0))
+                v:DrawModel()
+
+                if(RoachHook.Config["player.team.chams.invisible_overlay"]) then
+                    local clr = RoachHook.Config["player.team.chams.invisible_overlay.color"]
+                    local mat = RoachHook.Config["player.team.chams.invisible_overlay.mat"]
+    
+                    if(mat != 1) then
+                        render.MaterialOverride(overlay[mat])
+                        render.SuppressEngineLighting(false)
+                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                        render.SetBlend((clr.a - 0.01) / 255)
+        
+                        v:SetColor(Color(255, 255, 255, 0))
+                        v:DrawModel()
+                    end
+                end
+            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
+                local clr = RoachHook.Config["player.enemy.chams.invisible_chams.color"]
+                local mat = RoachHook.Config["player.enemy.chams.invisible_chams.mat"]
+
+                render.MaterialOverride(mats[mat])
+                render.SuppressEngineLighting(mat == 3)
+                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                render.SetBlend((clr.a - 0.01) / 255)
+
+                v:SetColor(Color(255, 255, 255, 0))
+                v:DrawModel()
+
+                if(RoachHook.Config["player.enemy.chams.invisible_overlay"]) then
+                    local clr = RoachHook.Config["player.enemy.chams.invisible_overlay.color"]
+                    local mat = RoachHook.Config["player.enemy.chams.invisible_overlay.mat"]
+    
+                    if(mat != 1) then
+                        render.MaterialOverride(overlay[mat])
+                        render.SuppressEngineLighting(false)
+                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                        render.SetBlend((clr.a - 0.01) / 255)
+        
+                        v:SetColor(Color(255, 255, 255, 0))
+                        v:DrawModel()
+                    end
+                end
+            end
+        end
+        
+        cam.IgnoreZ(false)
+
+    cam.End3D()
+
+    -- Visible Chams
+    cam.Start3D()
+
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+
+            if(v == me) then continue end
+                
+            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
+                local clr = RoachHook.Config["player.team.chams.visible_chams.color"]
+                local mat = RoachHook.Config["player.team.chams.visible_chams.mat"]
+
+                render.MaterialOverride(mats[mat])
+                render.SuppressEngineLighting(mat == 3)
+                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                render.SetBlend(clr.a / 255)
+
+                v:SetColor(Color(255, 255, 255, 0))
+                v:DrawModel()
+                
+                if(RoachHook.Config["player.team.chams.visible_overlay"]) then
+                    local clr = RoachHook.Config["player.team.chams.visible_overlay.color"]
+                    local mat = RoachHook.Config["player.team.chams.visible_overlay.mat"]
+    
+                    if(mat != 1) then
+                        render.MaterialOverride(overlay[mat])
+                        render.SuppressEngineLighting(false)
+                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                        render.SetBlend(clr.a / 255)
+        
+                        v:SetColor(Color(255, 255, 255, 0))
+                        v:DrawModel()
+                    end
+                end
+            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
+                local clr = RoachHook.Config["player.enemy.chams.visible_chams.color"]
+                local mat = RoachHook.Config["player.enemy.chams.visible_chams.mat"]
+
+                render.MaterialOverride(mats[mat])
+                render.SuppressEngineLighting(mat == 3)
+                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                render.SetBlend(clr.a / 255)
+
+                v:SetColor(Color(255, 255, 255, 0))
+                v:DrawModel()
+                
+                if(RoachHook.Config["player.enemy.chams.visible_overlay"]) then
+                    local clr = RoachHook.Config["player.enemy.chams.visible_overlay.color"]
+                    local mat = RoachHook.Config["player.enemy.chams.visible_overlay.mat"]
+    
+                    if(mat != 1) then
+                        render.MaterialOverride(overlay[mat])
+                        render.SuppressEngineLighting(false)
+                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
+                        render.SetBlend(clr.a / 255)
+        
+                        v:SetColor(Color(255, 255, 255, 0))
+                        v:DrawModel()
+                    end
+                end
+            end
+        end
 
     cam.End3D()
 end
