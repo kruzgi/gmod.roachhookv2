@@ -609,6 +609,7 @@ local cfgbw = (420 / 5) - 4
 local cfgsx = function(i) return 5 * i end
 local configData = {}
 // Setup menu
+local cvar_gamemode = GetConVar("gamemode")
 RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 470, {
     {"Ragebot",     RoachHook.Detour.Material("ragebot.png"), {
         {
@@ -1102,7 +1103,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
         {
             name = "Fun",
             items = {
-                Menu.NewCheckbox("Money Aimbot (DarkRP)", "misc.fun.b_money_aimbot", false, nil, nil, nil, nil, true, nil, "hold"),
+                Menu.NewCheckbox("Money Aimbot", "misc.fun.b_money_aimbot", false, nil, nil, nil, nil, true, nil, "hold"),
                 Menu.NewCheckbox("Money Aimbot Silent", "misc.fun.b_money_aimbot.b_silent", false, function()
                     return RoachHook.Config["misc.fun.b_money_aimbot"]
                 end),
@@ -1114,6 +1115,26 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 end),
                 Menu.NewSliderInt("Minimum Money Amount", "misc.fun.b_money_aimbot.i_min_dolars", 0, 0, 1000, "$%d", function()
                     return RoachHook.Config["misc.fun.b_money_aimbot"]
+                end),
+
+                Menu.NewCheckbox("[ DarkRP ] Force taunt", "misc.fun.b_force_taunt", false, function()
+                    return cvar_gamemode:GetString() == "darkrp"
+                end),
+                Menu.NewCombo("[ DarkRP ] Taunt", "misc.fun.b_force_taunt.i_taunt", {
+                    "Bow",
+                    "Muscle",
+                    "Becon",
+                    "Laugh",
+                    "Lion pose",
+                    "No",
+                    "Thumbs up",
+                    "Wave",
+                    "Dance",
+                }, 1, function()
+                    return RoachHook.Config["misc.fun.b_force_taunt"] && cvar_gamemode:GetString() == "darkrp"
+                end),
+                Menu.NewSliderFloat("[ DarkRP ] Taunt Refresh", "misc.fun.b_force_taunt.fl_refresh_time", 1.0, math.Clamp(engine.TickInterval() * 6, 0.1, 10.0), 10.0, "%0.2fs", 2, function()
+                    return RoachHook.Config["misc.fun.b_force_taunt"] && cvar_gamemode:GetString() == "darkrp"
                 end),
             }
         },
@@ -1446,6 +1467,21 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
         }
     } },
 })
+
+local tauntTimer = CurTime()
+local tauntSZID = {ACT_GMOD_GESTURE_BOW, ACT_GMOD_TAUNT_MUSCLE, ACT_GMOD_GESTURE_BECON, ACT_GMOD_TAUNT_LAUGH, ACT_GMOD_TAUNT_PERSISTENCE, ACT_GMOD_GESTURE_DISAGREE, ACT_GMOD_GESTURE_AGREE, ACT_GMOD_GESTURE_WAVE, ACT_GMOD_TAUNT_DANCE}
+hook.Add("Tick", "ForceTaunt", function()
+    if(cvar_gamemode:GetString() != "darkrp") then return end
+    if(!RoachHook.Config["misc.fun.b_force_taunt"] || !RoachHook.Config["misc.fun.b_force_taunt.i_taunt"]) then return end
+    local id = tauntSZID[RoachHook.Config["misc.fun.b_force_taunt.i_taunt"]]
+    if(!id) then return end
+
+    if(tauntTimer <= CurTime()) then
+        RunConsoleCommand("_DarkRP_DoAnimation", tostring(id))
+        
+        tauntTimer = CurTime() + (RoachHook.Config["misc.fun.b_force_taunt.fl_refresh_time"] || 1.0)
+    end
+end)
 
 local defVars = {
     ["Ignore"] = "misc.b_ignore",
