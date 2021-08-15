@@ -32,7 +32,22 @@ local function WorldModulation()
         end
     end
 end
+local function PropModulation()
+    local clr = RoachHook.Config["visuals.b_prop_modulation.color"]
+    if(!clr) then return end
+
+    if(RoachHook.Config["visuals.b_prop_modulation"]) then
+        for k, v in ipairs(ents.FindByClass("prop_*")) do
+            v:SetColor(clr)
+        end
+    else
+        for k, v in ipairs(ents.FindByClass("prop_*")) do
+            v:SetColor(color_white)
+        end
+    end
+end
 
 RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
     WorldModulation()
+    PropModulation()
 end

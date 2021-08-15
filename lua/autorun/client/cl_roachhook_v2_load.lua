@@ -814,6 +814,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     "Viewmodel Bump while Fake Ducking",
                 }, {}),
                 Menu.NewCheckbox("World Modulation", "visuals.b_world_modulation", false, nil, true, true, Color(255, 255, 255)),
+                Menu.NewCheckbox("Prop Modulation", "visuals.b_prop_modulation", false, nil, true, true, Color(255, 255, 255)),
             },
         }
     } },
