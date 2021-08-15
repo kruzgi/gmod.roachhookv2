@@ -672,7 +672,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     return RoachHook.Config["antiaim.b_enable"]
                 end),
                 Menu.NewSliderInt("Real Spin Speed", "antiaim.i_real_yaw.spin_speed", 50, 0, 100, "%d%%", function()
-                    return RoachHook.Config["antiaim.b_enable"] && yaw[RoachHook.Config["antiaim.i_real_yaw"]] == "Spin" || yaw[RoachHook.Config["antiaim.i_real_yaw"]] == "180° Spin"
+                    return RoachHook.Config["antiaim.b_enable"] && (yaw[RoachHook.Config["antiaim.i_real_yaw"]] == "Spin" || yaw[RoachHook.Config["antiaim.i_real_yaw"]] == "180° Spin")
                 end),
                 Menu.NewSliderInt("Custom Real Yaw", "antiaim.i_real_yaw.custom", 0, -180, 180, "%d°", function()
                     return RoachHook.Config["antiaim.b_enable"] && yaw[RoachHook.Config["antiaim.i_real_yaw"]] == "Custom"
@@ -681,7 +681,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     return RoachHook.Config["antiaim.b_enable"]
                 end),
                 Menu.NewSliderInt("Fake Spin Speed", "antiaim.i_fake_yaw.spin_speed", 50, 0, 100, "%d%%", function()
-                    return RoachHook.Config["antiaim.b_enable"] && yaw[RoachHook.Config["antiaim.i_fake_yaw"]] == "Spin" || yaw[RoachHook.Config["antiaim.i_fake_yaw"]] == "180° Spin"
+                    return RoachHook.Config["antiaim.b_enable"] && (yaw[RoachHook.Config["antiaim.i_fake_yaw"]] == "Spin" || yaw[RoachHook.Config["antiaim.i_fake_yaw"]] == "180° Spin")
                 end),
                 Menu.NewSliderInt("Custom Fake Yaw", "antiaim.i_fake_yaw.custom", 0, -180, 180, "%d°", function()
                     return RoachHook.Config["antiaim.b_enable"] && yaw[RoachHook.Config["antiaim.i_fake_yaw"]] == "Custom"
@@ -756,7 +756,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     "Arms",
                     "Legs",
                 }, {}),
-                Menu.NewMultiCombo("Target", "legitbot.target", {
+                Menu.NewMultiCombo("Ignore", "legitbot.target", {
                     "Team",
                     "Enemy",
                     "Admin",
@@ -1789,24 +1789,26 @@ RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
     if(plr == RoachHook.Detour.LocalPlayer()) then
         if(RoachHook.DrawingFake) then return end
 
-        plr:InvalidateBoneCache()
-
-            plr:SetPoseParameter("aim_yaw", 0)
-            plr:SetPoseParameter("head_yaw", 0)
-
-            plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-            plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-
-            local vel = plr:GetVelocity():Length2D()
-            local velScale = math.Clamp(vel / 60, 0, 1)
-            local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
-
-            plr:SetPoseParameter("move_x", velocity.x)
-            plr:SetPoseParameter("move_y", -velocity.y)
-
-            plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
-            
-        plr:SetupBones()
+        if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
+            plr:InvalidateBoneCache()
+    
+                plr:SetPoseParameter("aim_yaw", 0)
+                plr:SetPoseParameter("head_yaw", 0)
+    
+                plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
+                plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
+    
+                local vel = plr:GetVelocity():Length2D()
+                local velScale = math.Clamp(vel / 60, 0, 1)
+                local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+    
+                plr:SetPoseParameter("move_x", velocity.x)
+                plr:SetPoseParameter("move_y", -velocity.y)
+    
+                plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
+                
+            plr:SetupBones()
+        end
     else
         if(!plr || !plr:Alive() || plr:IsDormant()) then return end
         if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then return end
@@ -2000,6 +2002,7 @@ hook.Add("PostPlayerDraw", "LocalPlayerChamsFix", function(plr)
     render.SuppressEngineLighting(false)
 end)
 
+local plrTransColor = Color(255, 255, 255, 0)
 local function RenderChams()
     if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
         for k,v in ipairs(player.GetAll()) do
@@ -2109,6 +2112,8 @@ local function RenderChams()
             v:SetColor(color_white)
             v:SetRenderMode(RENDERMODE_TRANSCOLOR)
 
+            if(!v:Alive() || v:IsDormant()) then continue end
+
             if(v == me) then continue end
                 
             if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
@@ -2120,7 +2125,7 @@ local function RenderChams()
                 render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
                 render.SetBlend((clr.a - 0.01) / 255)
 
-                v:SetColor(Color(255, 255, 255, 0))
+                v:SetColor(plrTransColor)
                 v:DrawModel()
 
                 if(RoachHook.Config["player.team.chams.invisible_overlay"]) then
@@ -2133,7 +2138,7 @@ local function RenderChams()
                         render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
                         render.SetBlend((clr.a - 0.01) / 255)
         
-                        v:SetColor(Color(255, 255, 255, 0))
+                        v:SetColor(plrTransColor)
                         v:DrawModel()
                     end
                 end
@@ -2146,7 +2151,7 @@ local function RenderChams()
                 render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
                 render.SetBlend((clr.a - 0.01) / 255)
 
-                v:SetColor(Color(255, 255, 255, 0))
+                v:SetColor(plrTransColor)
                 v:DrawModel()
 
                 if(RoachHook.Config["player.enemy.chams.invisible_overlay"]) then
@@ -2159,7 +2164,7 @@ local function RenderChams()
                         render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
                         render.SetBlend((clr.a - 0.01) / 255)
         
-                        v:SetColor(Color(255, 255, 255, 0))
+                        v:SetColor(plrTransColor)
                         v:DrawModel()
                     end
                 end
@@ -2176,6 +2181,8 @@ local function RenderChams()
         for k,v in ipairs(player.GetAll()) do
             v:SetColor(color_white)
             v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+            
+            if(!v:Alive() || v:IsDormant()) then continue end
 
             if(v == me) then continue end
                 

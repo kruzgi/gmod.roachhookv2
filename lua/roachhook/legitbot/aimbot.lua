@@ -20,8 +20,40 @@ local bones = {
     }
 }
 
+local function LegitbotCheckValidity(plr)
+    local target = RoachHook.Config["legitbot.target"]
+    if(!target) then return false end
+    local me = RoachHook.Detour.LocalPlayer()
+    if(target[1] && plr:Team() == me:Team()) then return false end
+    if(target[2] && plr:Team() != me:Team()) then return false end
+    if(target[3] && (plr:IsSuperAdmin() || plr:IsAdmin())) then return false end
+    if(target[4] && plr:GetMoveType() == MOVETYPE_NOCLIP) then return false end
+    if(target[5] && plr:HasGodMode()) then return false end
+    if(target[6] && plr:IsFrozen()) then return false end
+    if(target[7] && plr:IsBot()) then return false end
+    if(RoachHook.Config["misc.b_ignore." .. RoachHook.Helpers.GetPlayerListID(v)]) then return false end
+
+    return true
+end
+local function CheckVis(me, plr, pos)
+    local trc = util.TraceLine({
+        start = me:EyePos(),
+        endpos = pos,
+        filter = me,
+        mask = MASK_SHOT,
+    })
+
+    if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then return true end
+    return false
+end
 RoachHook.Features.Legitbot.Aimbot = function(cmd)
-    if(!RoachHook.Config["legitbot.b_enable"] || !RoachHook.PressedVars["legitbot.b_enable.key"]) then return end
+    if(!RoachHook.Config["legitbot.b_enable"] || !RoachHook.Config["legitbot.b_enable.key"]) then return end
+    local boundToShoot = input.LookupKeyBinding(RoachHook.Config["legitbot.b_enable.key"].key) == "+attack"
+    if(boundToShoot) then
+        if(!cmd:KeyDown(IN_ATTACK)) then return end
+    else
+        if(!RoachHook.PressedVars["legitbot.b_enable.key"]) then return end
+    end
 
     local hitboxes = RoachHook.Config["legitbot.hitbox"]
     local maxFOV = RoachHook.Config["legitbot.i_fov"]
@@ -61,6 +93,7 @@ RoachHook.Features.Legitbot.Aimbot = function(cmd)
     local pos = nil
     for k,v in ipairs(player.GetAll()) do
         if(v:IsDormant() || v == RoachHook.Detour.LocalPlayer() || !v:Alive()) then continue end
+        if(!LegitbotCheckValidity(v)) then continue end
 
         local closestBoneFOV = 180
         local closestBone = nil
@@ -71,6 +104,9 @@ RoachHook.Features.Legitbot.Aimbot = function(cmd)
             if(!bone) then continue end
             
             local bonePos = v:GetBonePosition(bone)
+            local vis = CheckVis(RoachHook.Detour.LocalPlayer(), v, bonePos)
+            if(!vis) then continue end
+
             local angle = (bonePos - eyePos):Angle()
             local fov = Vector(math.NormalizeAngle(angle.x - ViewAngles.x), math.NormalizeAngle(angle.y - ViewAngles.y), 0):Length2D()
 
@@ -96,6 +132,20 @@ RoachHook.Features.Legitbot.Aimbot = function(cmd)
     angLerp.y = math.NormalizeAngle(angLerp.y)
     angLerp.z = 0
 
-    RoachHook.SilentAimbot = angLerp
-    cmd:SetViewAngles(angLerp)
+    if(RoachHook.Config["legitbot.b_mouse_sim"]) then
+        local scr = pos:ToScreen()
+        if(!scr.visible) then return end
+
+        RoachHook.SilentAimbot = angLerp
+        if(RoachHook.Config["legitbot.i_smooth"] <= 0) then
+            input.SetCursorPos(scr.x, scr.y)
+        else
+            local x, y = Lerp(1 - (RoachHook.Config["legitbot.i_smooth"] / 100), ScrW() / 2, scr.x), Lerp(1 - (RoachHook.Config["legitbot.i_smooth"] / 100), ScrH() / 2, scr.y)
+    
+            input.SetCursorPos(x, y)
+        end
+    else
+        RoachHook.SilentAimbot = angLerp
+        cmd:SetViewAngles(angLerp)
+    end
 end

@@ -233,8 +233,8 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
         90,
         math.random(-180, 180),
         (RoachHook.ServerTime || 0) * ((bSendPacket && RoachHook.Config["antiaim.i_fake_yaw.spin_speed"] || RoachHook.Config["antiaim.i_real_yaw.spin_speed"]) * 10),
-        (bSendPacket && -90 || 90) + ((((RoachHook.ServerTime || 0) * ((bSendPacket && RoachHook.Config["antiaim.i_fake_yaw.spin_speed"] || RoachHook.Config["antiaim.i_real_yaw.spin_speed"]) * 10)) % 180)),
-        (bSendPacket && -90 || 90) + 90 + math.random(-90, 90),
+        0,
+        0,
         bSendPacket && RoachHook.Config["antiaim.i_fake_yaw.custom"] || RoachHook.Config["antiaim.i_real_yaw.custom"],
     }
 
@@ -243,6 +243,14 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
     local iYawReal = RoachHook.Config["antiaim.i_real_yaw"]
     local iYawFake = RoachHook.Config["antiaim.i_fake_yaw"]
     local iMod = RoachHook.Config["antiaim.i_yaw_modifier"]
+    
+    if(bSendPacket) then
+        yaw[7] = yaw[iYawReal] + 90 + ((((RoachHook.ServerTime || 0) * RoachHook.Config["antiaim.i_fake_yaw.spin_speed"]) * 10) % 180)
+        yaw[8] = yaw[iYawReal] + 90 + math.random(-90, 90)
+    else
+        yaw[7] = yaw[iYawFake] + 90 + ((((RoachHook.ServerTime || 0) * RoachHook.Config["antiaim.i_real_yaw.spin_speed"]) * 10) % 180)
+        yaw[8] = yaw[iYawFake] + 90 + math.random(-90, 90)
+    end
 
     local mod = nil
     if(iMod == 2) then
