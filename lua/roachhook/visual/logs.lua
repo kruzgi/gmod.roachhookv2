@@ -137,3 +137,38 @@ RoachHook.DrawBehindMenu[#RoachHook.DrawBehindMenu + 1] = function()
         end
     end
 end
+
+gameevent.Listen("player_spawn")
+gameevent.Listen("player_hurt")
+RoachHook.Detour.hook.Add("player_spawn", "OnPlayerSpawnLog", function(e)
+    local plr = Player(e.userid)
+    if(RoachHook.Config["misc.b_logs.logs"] && RoachHook.Config["misc.b_logs.logs"][3] && plr && plr.Name) then
+        RoachHook.Helpers.AddLog({
+            {"[RoachHook " .. RoachHook.CheatVer .. "]", RoachHook.GetMenuTheme()},
+            {" Player spawned: ", Color(255, 255, 255)},
+            {"<b>" .. plr:Name() .. "</b>", team.GetColor(plr:Team())},
+        })
+    end
+end)
+RoachHook.Detour.hook.Add("player_hurt", "OnPlayerHurtOrKIll", function(e)
+    if(RoachHook.Config["misc.b_logs.logs"]) then
+        local attacker, victim = Player(e.attacker), Player(e.userid)
+        local hp = e.health
+        if(hp <= 0 && RoachHook.Config["misc.b_logs.logs"][5] && attacker && attacker.Name && victim && victim.Name) then
+            RoachHook.Helpers.AddLog({
+                {"[RoachHook " .. RoachHook.CheatVer .. "] ", RoachHook.GetMenuTheme()},
+                {"<b>" .. attacker:Name() .. "</b>", team.GetColor(attacker:Team())},
+                {" killed: ", Color(255, 255, 255)},
+                {"<b>" .. victim:Name() .. "</b>", team.GetColor(victim:Team())},
+            })
+        elseif(hp > 0 && RoachHook.Config["misc.b_logs.logs"][4] && attacker && attacker.Name && victim && victim.Name) then
+            RoachHook.Helpers.AddLog({
+                {"[RoachHook " .. RoachHook.CheatVer .. "] ", RoachHook.GetMenuTheme()},
+                {"<b>" .. attacker:Name() .. "</b>", team.GetColor(attacker:Team())},
+                {" hurt: ", Color(255, 255, 255)},
+                {"<b>" .. victim:Name() .. "</b>", team.GetColor(victim:Team())},
+                {"<b> [" .. hp .. "hp left]</b>", RoachHook.GetMenuTheme()}
+            })
+        end
+    end
+end)

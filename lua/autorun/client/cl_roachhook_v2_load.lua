@@ -120,7 +120,7 @@ RoachHook.ServerTime = nil
 local moduleLoadTimer = CurTime()
 hook.Add("Think", "AntiCrashModules", function()
     if(!LocalPlayer() || !IsValid(LocalPlayer())) then return end
-    if(moduleLoadTimer + 1 <= CurTime()) then
+    if(moduleLoadTimer + 0.2 <= CurTime()) then
         require("big")
         RoachHook.Modules.Big = big
         hook.Remove("Think", "AntiCrashModules")
@@ -131,81 +131,6 @@ RoachHook.Detour.hook.Add("Move", "UpdateServerTime", function()
     if(!IsFirstTimePredicted()) then return; end
     RoachHook.ServerTime = CurTime();
 end);
-
-// this has to be ran before autorun
-o_GetConVar = o_GetConVar || GetConVar
-o_GetConVar_Internal = o_GetConVar_Internal || GetConVar_Internal
-local CVar = RoachHook.Detour.FindMetaTable("ConVar")
-
-local commands = {
-    "sv_cheats",
-    "sv_allowcslua",
-}
-local commands_def = {
-    ["sv_cheats"] = 0,
-    ["sv_allowcslua"] = 0
-}
-
-function GetConVar_Internal(name)
-    return o_GetConVar_Internal(name)
-end
-function GetConVar(name)
-    return o_GetConVar(name)
-end
-o_GetBool = o_GetBool || CVar.GetBool
-o_GetFloat = o_GetFloat || CVar.GetFloat
-o_GetInt = o_GetInt || CVar.GetInt
-o_GetString = o_GetString || CVar.GetString
-
-local function ShouldBypassConcommand(name)
-    local cmds = RoachHook.Config["misc.cmd_check_bypass"]
-    if(!cmds) then return false end
-
-    for k,v in pairs(cmds) do
-        if(!v) then continue end
-
-        if(commands[k] == name) then return true end
-    end
-
-    return false
-end
-
-function CVar:GetBool()
-    if(ShouldBypassConcommand(self:GetName())) then
-        print("Bypased: " .. self:GetName())
-
-        return commands_def[self:GetName()]
-    end
-
-    return o_GetBool(self)
-end
-function CVar:GetFloat()
-    if(ShouldBypassConcommand(self:GetName())) then
-        print("Bypased: " .. self:GetName())
-        
-        return commands_def[self:GetName()]
-    end
-
-    return o_GetFloat(self)
-end
-function CVar:GetInt()
-    if(ShouldBypassConcommand(self:GetName())) then
-        print("Bypased: " .. self:GetName())
-        
-        return commands_def[self:GetName()]
-    end
-    
-    return o_GetInt(self)
-end
-function CVar:GetString()
-    if(ShouldBypassConcommand(self:GetName())) then
-        print("Bypased: " .. self:GetName())
-        
-        return commands_def[self:GetName()]
-    end
-    
-    return o_GetString(self)
-end
 
 local menuClr = Color(0, 0, 255)
 RoachHook.GetMenuTheme = function()
@@ -257,10 +182,16 @@ RoachHook_IncludeFile("roachhook/visual/viewmodel_chams.lua")
 RoachHook_IncludeFile("roachhook/visual/radar.lua")
 RoachHook_IncludeFile("roachhook/visual/logs.lua")
 RoachHook_IncludeFile("roachhook/visual/world.lua")
+RoachHook_IncludeFile("roachhook/visual/view.lua")
+RoachHook_IncludeFile("roachhook/visual/animations.lua")
+RoachHook_IncludeFile("roachhook/visual/chams.lua")
+
 RoachHook_IncludeFile("roachhook/misc/movement.lua")
-RoachHook_IncludeFile("roachhook/misc/camera.lua")
 RoachHook_IncludeFile("roachhook/misc/net_dump.lua")
 RoachHook_IncludeFile("roachhook/misc/money_aimbot.lua")
+RoachHook_IncludeFile("roachhook/misc/cvar_bypass.lua")
+RoachHook_IncludeFile("roachhook/misc/cfg_system.lua")
+
 RoachHook_IncludeFile("roachhook/legitbot/aimbot.lua")
 RoachHook_IncludeFile("roachhook/ragebot/run.lua")
 // Fonts
@@ -364,117 +295,6 @@ RoachHook.Detour.hook.Add("Think", "UpdateDPIScaling", function()
     end
 end)
 
-local anims = {
-    ["idle_ar2"] = "cidle_ar2",
-    ["idle_crossbow"] = "cidle_crossbow",
-    ["idle_camera"] = "cidle_camera",
-    ["idle_dual"] = "cidle_dual",
-    ["idle_fist"] = "cidle_fist",
-    ["idle_grenade"] = "cidle_grenade",
-    ["idle_knife"] = "cidle_knife",
-    ["idle_magic"] = "cidle_magic",
-    ["idle_melee"] = "cidle_melee",
-    ["idle_melee2"] = "cidle_melee2",
-    ["idle_passive"] = "cidle_passive",
-    ["idle_physgun"] = "cidle_physgun",
-    ["idle_pistol"] = "cidle_pistol",
-    ["idle_revolver"] = "cidle_revolver",
-    ["idle_rpg"] = "cidle_rpg",
-    ["idle_shotgun"] = "cidle_shotgun",
-    ["idle_slam"] = "cidle_slam",
-    ["idle_smg1"] = "cidle_smg1",
-    ["walk_ar2"] = "cwalk_ar2",
-    ["walk_camera"] = "cwalk_camera",
-    ["walk_crossbow"] = "cwalk_crossbow",
-    ["walk_dual"] = "cwalk_dual",
-    ["walk_fist"] = "cwalk_fist",
-    ["walk_knife"] = "cwalk_knife",
-    ["walk_magic"] = "cwalk_magic",
-    ["walk_melee2"] = "cwalk_melee2",
-    ["walk_passive"] = "cwalk_passive",
-    ["walk_pistol"] = "cwalk_pistol",
-    ["walk_physgun"] = "cwalk_physgun",
-    ["walk_revolver"] = "cwalk_revolver",
-    ["walk_rpg"] = "cwalk_rpg",
-    ["walk_shotgun"] = "cwalk_shotgun",
-    ["walk_smg1"] = "cwalk_smg1",
-    ["walk_grenade"] = "cwalk_grenade",
-    ["walk_melee"] = "cwalk_melee",
-    ["walk_slam"] = "cwalk_slam",
-    ["run_ar2"] = "cwalk_ar2",
-    ["run_camera"] = "cwalk_camera",
-    ["run_crossbow"] = "cwalk_crossbow",
-    ["run_dual"] = "cwalk_dual",
-    ["run_fist"] = "cwalk_fist",
-    ["run_knife"] = "cwalk_knife",
-    ["run_magic"] = "cwalk_magic",
-    ["run_melee2"] = "cwalk_melee2",
-    ["run_passive"] = "cwalk_passive",
-    ["run_pistol"] = "cwalk_pistol",
-    ["run_physgun"] = "cwalk_physgun",
-    ["run_revolver"] = "cwalk_revolver",
-    ["run_rpg"] = "cwalk_rpg",
-    ["run_shotgun"] = "cwalk_shotgun",
-    ["run_smg1"] = "cwalk_smg1",
-    ["run_grenade"] = "cwalk_grenade",
-    ["run_melee"] = "cwalk_melee",
-    ["run_slam"] = "cwalk_slam",
-    ["cidle_ar2"] = "cidle_ar2",
-    ["cidle_crossbow"] = "cidle_crossbow",
-    ["cidle_camera"] = "cidle_camera",
-    ["cidle_dual"] = "cidle_dual",
-    ["cidle_fist"] = "cidle_fist",
-    ["cidle_grenade"] = "cidle_grenade",
-    ["cidle_knife"] = "cidle_knife",
-    ["cidle_magic"] = "cidle_magic",
-    ["cidle_melee"] = "cidle_melee",
-    ["cidle_melee2"] = "cidle_melee2",
-    ["cidle_passive"] = "cidle_passive",
-    ["cidle_physgun"] = "cidle_physgun",
-    ["cidle_pistol"] = "cidle_pistol",
-    ["cidle_revolver"] = "cidle_revolver",
-    ["cidle_rpg"] = "cidle_rpg",
-    ["cidle_shotgun"] = "cidle_shotgun",
-    ["cidle_slam"] = "cidle_slam",
-    ["cidle_smg1"] = "cidle_smg1",
-    ["cwalk_ar2"] = "cwalk_ar2",
-    ["cwalk_camera"] = "cwalk_camera",
-    ["cwalk_crossbow"] = "cwalk_crossbow",
-    ["cwalk_dual"] = "cwalk_dual",
-    ["cwalk_fist"] = "cwalk_fist",
-    ["cwalk_knife"] = "cwalk_knife",
-    ["cwalk_magic"] = "cwalk_magic",
-    ["cwalk_melee2"] = "cwalk_melee2",
-    ["cwalk_passive"] = "cwalk_passive",
-    ["cwalk_pistol"] = "cwalk_pistol",
-    ["cwalk_physgun"] = "cwalk_physgun",
-    ["cwalk_revolver"] = "cwalk_revolver",
-    ["cwalk_rpg"] = "cwalk_rpg",
-    ["cwalk_shotgun"] = "cwalk_shotgun",
-    ["cwalk_smg1"] = "cwalk_smg1",
-    ["cwalk_grenade"] = "cwalk_grenade",
-    ["cwalk_melee"] = "cwalk_melee",
-    ["cwalk_slam"] = "cwalk_slam",
-    ["cwalk_ar2"] = "cwalk_ar2",
-    ["cwalk_camera"] = "cwalk_camera",
-    ["cwalk_crossbow"] = "cwalk_crossbow",
-    ["cwalk_dual"] = "cwalk_dual",
-    ["cwalk_fist"] = "cwalk_fist",
-    ["cwalk_knife"] = "cwalk_knife",
-    ["cwalk_magic"] = "cwalk_magic",
-    ["cwalk_melee2"] = "cwalk_melee2",
-    ["cwalk_passive"] = "cwalk_passive",
-    ["cwalk_pistol"] = "cwalk_pistol",
-    ["cwalk_physgun"] = "cwalk_physgun",
-    ["cwalk_revolver"] = "cwalk_revolver",
-    ["cwalk_rpg"] = "cwalk_rpg",
-    ["cwalk_shotgun"] = "cwalk_shotgun",
-    ["cwalk_smg1"] = "cwalk_smg1",
-    ["cwalk_grenade"] = "cwalk_grenade",
-    ["cwalk_melee"] = "cwalk_melee",
-    ["cwalk_slam"] = "cwalk_slam",
-}
-
 local hitboxes = {
     "Head",
     "Body",
@@ -556,40 +376,6 @@ local function GetClickedItems(var)
         if(items[i]) then num = num + 1 end
     end
     return num
-end
-
-local ConfigSystem = {}
-function ConfigSystem:CompressConfig(json)
-    local str = ""
-    local spacing = "​"
-
-    for i = 1, #json do
-        local char = json[i]
-
-        str = str .. string.byte(char) .. spacing
-    end
-
-    return str
-end
-function ConfigSystem:DecompressConfig(cfg)
-    local str = ""
-    local spacing = "​"
-
-    local bytes = {}
-    local byteTbl = cfg:Split(spacing)
-    for k=1, #byteTbl do
-        if(tonumber(byteTbl[k])) then
-            bytes[#bytes + 1] = tonumber(byteTbl[k])
-        end
-    end
-
-    for i = 1, #bytes do
-        local byte = bytes[i]
-
-        str = str .. string.char(byte)
-    end
-
-    return str
 end
 
 local function GetPlayerNames()
@@ -1334,7 +1120,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     if(!string.EndsWith(configWishName, ".txt")) then addToName = ".txt" end
 
                     local name = "roachhook/config/" .. configWishName .. addToName
-                    local compressed = ConfigSystem:CompressConfig(util.TableToJSON(RoachHook.Config, true))
+                    local compressed = RoachHook.ConfigSystem:CompressConfig(util.TableToJSON(RoachHook.Config, true))
 
                     file.Write(name, compressed)
                     
@@ -1348,7 +1134,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
 
                     local name = "roachhook/config/" .. cfg
                     file.AsyncRead(name, "DATA", function(name, path, status, content)
-                        local config = RoachHook.Detour.util.JSONToTable(ConfigSystem:DecompressConfig(content))
+                        local config = RoachHook.Detour.util.JSONToTable(RoachHook.ConfigSystem:DecompressConfig(content))
                         
                         config["config.szName"] = RoachHook.Config["config.szName"]
                         config["config.szName_Rename"] = RoachHook.Config["config.szName_Rename"]
@@ -1380,7 +1166,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     local curCfg = RoachHook.Config
 
                     local name = "roachhook/config/" .. cfg
-                    local compressed = ConfigSystem:CompressConfig(util.TableToJSON(curCfg, true))
+                    local compressed = RoachHook.ConfigSystem:CompressConfig(util.TableToJSON(curCfg, true))
 
                     RoachHook.Detour.file.Write(name, compressed)
 
@@ -1468,21 +1254,6 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
     } },
 })
 
-local tauntTimer = CurTime()
-local tauntSZID = {ACT_GMOD_GESTURE_BOW, ACT_GMOD_TAUNT_MUSCLE, ACT_GMOD_GESTURE_BECON, ACT_GMOD_TAUNT_LAUGH, ACT_GMOD_TAUNT_PERSISTENCE, ACT_GMOD_GESTURE_DISAGREE, ACT_GMOD_GESTURE_AGREE, ACT_GMOD_GESTURE_WAVE, ACT_GMOD_TAUNT_DANCE}
-hook.Add("Tick", "ForceTaunt", function()
-    if(cvar_gamemode:GetString() != "darkrp") then return end
-    if(!RoachHook.Config["misc.fun.b_force_taunt"] || !RoachHook.Config["misc.fun.b_force_taunt.i_taunt"]) then return end
-    local id = tauntSZID[RoachHook.Config["misc.fun.b_force_taunt.i_taunt"]]
-    if(!id) then return end
-
-    if(tauntTimer <= CurTime()) then
-        RunConsoleCommand("_DarkRP_DoAnimation", tostring(id))
-        
-        tauntTimer = CurTime() + (RoachHook.Config["misc.fun.b_force_taunt.fl_refresh_time"] || 1.0)
-    end
-end)
-
 local defVars = {
     ["Ignore"] = "misc.b_ignore",
     ["Resolver"] = "misc.b_resolve",
@@ -1499,41 +1270,6 @@ RoachHook.Detour.hook.Add("Think", "UpdatePlayerListVars", function()
     end
 end)
 
-gameevent.Listen("player_spawn")
-gameevent.Listen("player_hurt")
-RoachHook.Detour.hook.Add("player_spawn", "OnPlayerSpawnLog", function(e)
-    local plr = Player(e.userid)
-    if(RoachHook.Config["misc.b_logs.logs"] && RoachHook.Config["misc.b_logs.logs"][3] && plr && plr.Name) then
-        RoachHook.Helpers.AddLog({
-            {"[RoachHook " .. RoachHook.CheatVer .. "]", RoachHook.GetMenuTheme()},
-            {" Player spawned: ", Color(255, 255, 255)},
-            {"<b>" .. plr:Name() .. "</b>", team.GetColor(plr:Team())},
-        })
-    end
-end)
-RoachHook.Detour.hook.Add("player_hurt", "OnPlayerHurtOrKIll", function(e)
-    if(RoachHook.Config["misc.b_logs.logs"]) then
-        local attacker, victim = Player(e.attacker), Player(e.userid)
-        local hp = e.health
-        if(hp <= 0 && RoachHook.Config["misc.b_logs.logs"][5] && attacker && attacker.Name && victim && victim.Name) then
-            RoachHook.Helpers.AddLog({
-                {"[RoachHook " .. RoachHook.CheatVer .. "] ", RoachHook.GetMenuTheme()},
-                {"<b>" .. attacker:Name() .. "</b>", team.GetColor(attacker:Team())},
-                {" killed: ", Color(255, 255, 255)},
-                {"<b>" .. victim:Name() .. "</b>", team.GetColor(victim:Team())},
-            })
-        elseif(hp > 0 && RoachHook.Config["misc.b_logs.logs"][4] && attacker && attacker.Name && victim && victim.Name) then
-            RoachHook.Helpers.AddLog({
-                {"[RoachHook " .. RoachHook.CheatVer .. "] ", RoachHook.GetMenuTheme()},
-                {"<b>" .. attacker:Name() .. "</b>", team.GetColor(attacker:Team())},
-                {" hurt: ", Color(255, 255, 255)},
-                {"<b>" .. victim:Name() .. "</b>", team.GetColor(victim:Team())},
-                {"<b> [" .. hp .. "hp left]</b>", RoachHook.GetMenuTheme()}
-            })
-        end
-    end
-end)
-
 RoachHook.ActiveFrame = RoachHook.frame
 
 local function UpdateConfigs(files)
@@ -1545,7 +1281,7 @@ local function UpdateConfigs(files)
         if(!configData[f]) then
             local name = "roachhook/config/" .. File
             local content = file.Read(name, "DATA")
-            local config = util.JSONToTable(ConfigSystem:DecompressConfig(content))
+            local config = util.JSONToTable(RoachHook.ConfigSystem:DecompressConfig(content))
 
             configData[f] = {
                 owner = config["madeby"],
@@ -1600,88 +1336,6 @@ RoachHook.Detour.hook.Add("Think", "UpdatePressedKeys", function()
     end
 end)
 
-local function GetClosestPositions(x, y, tbl, num)
-    local tabl = table.Copy(tbl)
-    local num = math.Clamp(num, 0, #tbl)
-    if(num <= 0) then return {} end
-    if(num >= #tbl) then return tbl end
-
-    local closestItems = {}
-
-    local iDidXTimes = 0
-
-    ::redo::
-
-    local closestDist = math.huge
-    local closestID = nil
-    for k=0, #tabl do
-        local dist = math.Distance(x, y, tabl[k].pos.x, tabl[k].pos.y)
-        if(dist < closestDist) then
-            closestDist = dist
-            closestID = k
-        end
-    end
-
-    if(closestID) then
-        closestItems[#closestItems + 1] = tabl[closestID].pos
-
-        table.remove(tabl, closestID)
-    end
-
-    iDidXTimes = iDidXTimes + 1
-
-    if(iDidXTimes < num) then goto redo end
-
-    return closestItems
-end
-local function OutlinedPoly(poly)
-    local last = nil
-    for k=0, #poly do
-        if(last) then
-            RoachHook.Detour.surface.DrawLine(poly[k].x, poly[k].y, last.x, last.y)
-        else
-            RoachHook.Detour.surface.DrawLine(poly[1].x, poly[1].y, poly[#poly].x, poly[#poly].y)
-        end
-
-        last = poly[k]
-    end
-end
-
-local snowFlakesData = {}
-local backgroundAnimations = {
-    [1] = function()
-        local clr = RoachHook.Config["misc.b_bg_anim.color"]
-
-        for i=0, ScrW() / 5 do
-            if(!snowFlakesData[i]) then
-                snowFlakesData[i] = {
-                    start = Vector(math.random(18 * RoachHook.DPIScale, ScrW() - 18 * RoachHook.DPIScale), -(math.random(18, ScrH()) * RoachHook.DPIScale), 0),
-                    speed = math.random(120, 180),
-                    spinSpeed = math.random(45, 128),
-                    spinAng = math.random(-180, 180),
-                    leftRightMoveSpeed = math.random(30, 120),
-                }
-            end
-        end
-
-        RoachHook.Detour.surface.SetDrawColor(clr)
-        for k=1, #snowFlakesData do
-            snowFlakesData[k].start.y = snowFlakesData[k].start.y + snowFlakesData[k].speed * FrameTime()
-            if(snowFlakesData[k].start.y > ScrH()) then
-                snowFlakesData[k].start.y = -60 * RoachHook.DPIScale
-            end
-
-            snowFlakesData[k].spinAng = ((CurTime() * snowFlakesData[k].spinSpeed) % 180) - 90
-
-            for ang=0, 360, 360 / 8 do
-                local add = Angle(0, ang + snowFlakesData[k].spinAng, 0):Forward()
-    
-                RoachHook.Detour.surface.DrawLine(snowFlakesData[k].start.x, snowFlakesData[k].start.y, snowFlakesData[k].start.x + add.x * (8 * RoachHook.DPIScale), snowFlakesData[k].start.y + add.y * (8 * RoachHook.DPIScale))
-            end
-        end
-    end,
-}
-
 local function GetAdminsCount()
     local num = 0
     local players = player.GetAll()
@@ -1694,186 +1348,6 @@ local function GetAdminsCount()
     return num
 end
 
-local taunts = {
-    ACT_GMOD_TAUNT_SALUTE,
-    ACT_GMOD_TAUNT_PERSISTENCE,
-    ACT_GMOD_TAUNT_MUSCLE,
-    ACT_GMOD_TAUNT_LAUGH,
-    ACT_GMOD_TAUNT_CHEER,
-    ACT_GMOD_TAUNT_DANCE,
-    ACT_GMOD_TAUNT_ROBOT,
-    ACT_GMOD_DEATH,
-    ACT_HL2MP_SWIM,
-}
-local bStartedTaunt = false
-local bWasInNoclip = false
-local iLastTaunt = nil
-RoachHook.Detour.hook.Add("PrePlayerDraw", "robot_taunt", function(plr)
-    if(plr != LocalPlayer()) then return end
-
-    local iTaunt = RoachHook.Config["misc.b_taunt.i_selected"]
-    if(iLastTaunt == nil) then iLastTaunt = iTaunt end
-
-    if(RoachHook.Config["misc.b_taunt"]) then
-        if(iLastTaunt != iTaunt) then
-            LocalPlayer():AnimResetGestureSlot(GESTURE_SLOT_CUSTOM)
-            bStartedTaunt = false
-        end
-
-        if(LocalPlayer():GetMoveType() == MOVETYPE_NOCLIP) then
-            bWasInNoclip = true
-        end
-
-        if(LocalPlayer():IsOnGround() && bWasInNoclip && LocalPlayer():GetMoveType() != MOVETYPE_NOCLIP) then
-            bWasInNoclip = false
-            bStartedTaunt = false
-        end
-
-        if(!bStartedTaunt) then
-            LocalPlayer():AnimRestartGesture(GESTURE_SLOT_CUSTOM, taunts[iTaunt], false)
-            iLastTaunt = iTaunt
-        end
-        
-        bStartedTaunt = true
-    else
-        if(bStartedTaunt) then
-            LocalPlayer():AnimResetGestureSlot(GESTURE_SLOT_CUSTOM)
-        end
-
-        bStartedTaunt = false
-    end
-end)
-RoachHook.Detour.hook.Add("CalcView", "ViewFix", function(plr, orig, angles, fov)
-    if(!LocalPlayer():Alive()) then return end
-
-    if(RoachHook.Config["fakelag.b_enable"] && RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) then
-        orig.z = LocalPlayer():GetPos().z + 64
-    end
-
-    if(RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"]) then
-        local trc = util.TraceHull({
-            start = orig,
-            endpos = orig - (RoachHook.SilentAimbot:Forward() * RoachHook.Config["misc.camera.b_thirdperson.i_dist"]),
-            mins = Vector(-3.75, -3.75, -3.75),
-            maxs = Vector(3.75, 3.75, 3.75),
-            mask = MASK_SHOT,
-            filter = RoachHook.Detour.player.GetAll(),
-        })
-
-        orig = trc.HitPos
-    end
-    
-    local anglee = ((RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"]) || (RoachHook.Config["visual.removals"] && RoachHook.Config["visual.removals"][1])) && RoachHook.SilentAimbot || angles
-    if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then
-        anglee = (RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"]) && RoachHook.SilentAimbot || angles
-    end
-
-    return {
-        origin = orig,
-        drawviewer = RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"],
-        angles = anglee,
-        fov = (RoachHook.Config["misc.camera.b_force_fov"] && 90 || fov) + (RoachHook.Config["misc.camera.i_fov"] || 0)
-    }
-end)
-RoachHook.Detour.hook.Add("CalcViewModelView", "CustomViewmodel", function(wpn, vm, oPos, oAng, pos, ang)
-    if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
-
-    if(RoachHook.Config["visual.removals"] && RoachHook.Config["visual.removals"][4] && RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) then
-        pos.z = RoachHook.Detour.LocalPlayer():GetPos().z + RoachHook.Detour.LocalPlayer():GetViewOffset().z
-    end
-
-    if(!LocalPlayer():Alive()) then return end
-    if(!RoachHook.Config["player.b_custom_viewmodel"]) then return end
-    local pos, ang = pos, ang
-    pos = pos + (ang:Forward() * RoachHook.Config["player.b_custom_viewmodel.y"])
-    pos = pos + (ang:Right() * RoachHook.Config["player.b_custom_viewmodel.x"])
-    pos = pos + (ang:Up() * RoachHook.Config["player.b_custom_viewmodel.z"])
-
-    local ang = ang + Angle(0, 0, RoachHook.Config["player.b_custom_viewmodel.roll"])
-
-    return pos, ang
-end)
-RoachHook.Detour.hook.Add("PostPlayerDraw", "AnimationFixPost", function()
-    if(plr == RoachHook.Detour.LocalPlayer()) then
-        
-    end
-end)
-local lastTickCount = nil
-RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
-    if(plr == RoachHook.Detour.LocalPlayer()) then
-        if(RoachHook.DrawingFake) then return end
-
-        if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
-            plr:InvalidateBoneCache()
-    
-                plr:SetPoseParameter("aim_yaw", 0)
-                plr:SetPoseParameter("head_yaw", 0)
-    
-                plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-                plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-    
-                local vel = plr:GetVelocity():Length2D()
-                local velScale = math.Clamp(vel / 60, 0, 1)
-                local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
-    
-                plr:SetPoseParameter("move_x", velocity.x)
-                plr:SetPoseParameter("move_y", -velocity.y)
-    
-                plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
-                
-            plr:SetupBones()
-        end
-    else
-        if(!plr || !plr:Alive() || plr:IsDormant()) then return end
-        if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then return end
-        if(RoachHook.Config["misc.b_ignore." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
-        if(!RoachHook.Config["misc.b_resolve." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
-        
-        local resolver_pitches = {
-            nil,
-            -89,
-            0,
-            89,
-        }
-        local resolver_yaws = {
-            nil,
-            -90,
-            90,
-            180,
-            0,
-            RoachHook.Modules.Big.RandomInt(-180, 180),
-        }
-
-        local iPitch = RoachHook.Config["misc.b_resolve.i_pitch." .. RoachHook.Helpers.GetPlayerListID(plr)]
-        local iYaw = RoachHook.Config["misc.b_resolve.i_yaw." .. RoachHook.Helpers.GetPlayerListID(plr)]
-
-        local plrNewPitch = iPitch > 1 && resolver_pitches[iPitch] || plr:EyeAngles().x
-        local plrNewYaw = plr:EyeAngles().y + (iYaw > 1 && resolver_yaws[iYaw] || 0)
-
-        plr:InvalidateBoneCache()
-
-            if(iPitch > 1) then
-                plr:SetPoseParameter("aim_pitch", plrNewPitch)
-                plr:SetPoseParameter("head_pitch", plrNewPitch)
-            end
-
-            if(iYaw > 1) then
-                plr:SetPoseParameter("aim_yaw", 0)
-                plr:SetPoseParameter("head_yaw", 0)
-                
-                local vel = plr:GetVelocity():Length2D()
-                local velScale = math.Clamp(vel / 60, 0, 1)
-                local velocity = (plr:GetVelocity():Angle() - Angle(0, plrNewYaw, 0)):Forward() * velScale
-    
-                plr:SetPoseParameter("move_x", velocity.x)
-                plr:SetPoseParameter("move_y", -velocity.y)
-    
-                plr:SetRenderAngles(Angle(0, plrNewYaw, 0))
-            end
-            
-        plr:SetupBones()
-    end
-end)
 local cl_interp, cl_updaterate, cl_interp_ratio = GetConVar("cl_interp"), GetConVar("cl_updaterate"), GetConVar("cl_interp_ratio")
 RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     if(!LocalPlayer():Alive()) then bSendPacket = true return end
@@ -1961,314 +1435,6 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     RoachHook.Helpers.FixMovement(cmd)
     RoachHook.Features.Misc.CircleStrafer(cmd)
 end)
-
-RoachHook.Detour.hook.Add("Think", "Force3DSkybox", function()
-    if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
-    if(!RoachHook.Config["visual.removals"]) then return end
-    if(!RoachHook.Config["visual.removals"][2]) then return end
-    
-    local r_3dsky = GetConVar("r_3dsky")
-    if(r_3dsky:GetInt() == 0) then RunConsoleCommand("r_3dsky", "1") end
-end)
-RoachHook.Detour.hook.Add("PreDrawSkyBox", "HideSkybox", function()
-    if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
-    if(!RoachHook.Config["visual.removals"]) then return end
-    if(!RoachHook.Config["visual.removals"][2]) then return end
-
-    return true
-end)
-
-local mats = {
-    RoachHook.Materials.chams.none,
-    RoachHook.Materials.chams.textured,
-    RoachHook.Materials.chams.textured, //flat
-    RoachHook.Materials.chams.wireframe,
-    RoachHook.Materials.chams.metalic,
-}
-local overlay = {
-    RoachHook.Materials.chams.none,
-    RoachHook.Materials.chams.wireframe,
-    Material("models/props_combine/portalball001_sheet"),
-}
-
-hook.Add("PrePlayerDraw", "LocalPlayerChams", function(plr)
-    if(plr != RoachHook.Detour.LocalPlayer()) then return end
-    if(RoachHook.DrawingFake) then return end
-    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then return end
-
-    if(RoachHook.Config["player.local_chams.b_enable"]) then
-        local clr = RoachHook.Config["player.local_chams.b_enable.color"]
-        local mat = RoachHook.Config["player.local_chams.b_enable.mat"]
-        
-        render.MaterialOverride(mats[mat])
-        render.SuppressEngineLighting(mat == 3)
-        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-        render.SetBlend(clr.a / 255)
-    end
-end)
-hook.Add("PostPlayerDraw", "LocalPlayerChamsFix", function(plr)
-    if(plr != RoachHook.Detour.LocalPlayer()) then return end
-    if(RoachHook.DrawingFake) then return end
-
-    render.SetColorModulation(1, 1, 1)
-    render.SetBlend(1)
-    render.MaterialOverride(RoachHook.Materials.chams.none)
-    render.SuppressEngineLighting(false)
-end)
-
-local plrTransColor = Color(255, 255, 255, 0)
-local function RenderChams()
-    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
-        for k,v in ipairs(player.GetAll()) do
-            v:SetColor(color_white)
-            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
-        end
-
-        return
-    end
-
-    -- Local Chams (LocalPlayer Chams, Fake Chams)
-    cam.Start3D()
-        
-        local plr = RoachHook.Detour.LocalPlayer()
-        
-        if(RoachHook.Config["player.local_chams.b_enable"] && RoachHook.Config["player.local_chams.b_enable.b_overlay"]) then
-            local clr = RoachHook.Config["player.local_chams.b_enable.b_overlay.color"]
-            local mat = RoachHook.Config["player.local_chams.b_enable.b_overlay.mat"]
-            
-            if(mat != 1) then
-                RoachHook.DrawingFake = true
-    
-                render.MaterialOverride(overlay[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend(clr.a / 255)
-                plr:DrawModel()
-                
-                RoachHook.DrawingFake = false
-            end
-        end
-
-        if(RoachHook.Config["player.local_chams.b_enable"] && RoachHook.Config["player.local_chams.b_fake"]) then
-            local clr = RoachHook.Config["player.local_chams.b_fake.color"]
-            local mat = RoachHook.Config["player.local_chams.b_fake.mat"]
-            
-            local anglesDiff = math.abs(RoachHook.AntiAimData.real.y - RoachHook.AntiAimData.fake.y)
-            if(anglesDiff > 5) then
-                plr:InvalidateBoneCache()
-    
-                    plr:SetPoseParameter("aim_yaw", 0)
-                    plr:SetPoseParameter("head_yaw", 0)
-    
-                    local pitch = (math.Clamp(RoachHook.AntiAimData.fake.x, -89, 89) + 89) / (89 * 2)
-    
-                    local aPMin, aPMax = plr:GetPoseParameterRange(plr:LookupPoseParameter("aim_pitch"))
-                    local hPMin, hPMax = plr:GetPoseParameterRange(plr:LookupPoseParameter("head_pitch"))
-                    if(pitch && aPMin && aPMax) then
-                        plr:SetPoseParameter("aim_pitch", math.Remap(pitch, 0, 1, aPMin, aPMax))
-                    end
-
-                    if(pitch && hPMin && hPMax) then
-                        plr:SetPoseParameter("head_pitch", math.Remap(pitch, 0, 1, hPMin, hPMax))
-                    end
-    
-                    local vel = plr:GetVelocity():Length2D()
-                    local velScale = math.Clamp(vel / 60, 0, 1)
-                    local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.fake.y, 0)):Forward() * velScale
-    
-                    plr:SetPoseParameter("move_x", velocity.x)
-                    plr:SetPoseParameter("move_y", -velocity.y)
-    
-                    plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.fake.y, 0))
-                    
-                plr:SetupBones()
-                
-                RoachHook.DrawingFake = true
-    
-                render.MaterialOverride(mats[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend(clr.a / 255)
-                plr:DrawModel()
-                
-                if(RoachHook.Config["player.local_chams.b_fake.b_overlay"]) then
-                    local clr = RoachHook.Config["player.local_chams.b_fake.b_overlay.color"]
-                    local mat = RoachHook.Config["player.local_chams.b_fake.b_overlay.mat"]
-    
-                    if(mat != 1) then
-                        render.MaterialOverride(overlay[mat])
-                        render.SuppressEngineLighting(mat == 3)
-                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                        render.SetBlend(clr.a / 255)
-                        plr:DrawModel()
-                    end
-                end
-                
-                RoachHook.DrawingFake = false
-            end
-        end
-
-        render.SetColorModulation(1, 1, 1)
-        render.SetBlend(1)
-        render.MaterialOverride(RoachHook.Materials.chams.none)
-        render.SuppressEngineLighting(false)
-
-    cam.End3D()
-    
-    local me = RoachHook.Detour.LocalPlayer()
-    
-    -- Invisible Chams
-    cam.Start3D()
-
-        cam.IgnoreZ(true)
-
-        for k,v in ipairs(player.GetAll()) do
-            v:SetColor(color_white)
-            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
-
-            if(!v:Alive() || v:IsDormant()) then continue end
-
-            if(v == me) then continue end
-                
-            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
-                local clr = RoachHook.Config["player.team.chams.invisible_chams.color"]
-                local mat = RoachHook.Config["player.team.chams.invisible_chams.mat"]
-
-                render.MaterialOverride(mats[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend((clr.a - 0.01) / 255)
-
-                v:SetColor(plrTransColor)
-                v:DrawModel()
-
-                if(RoachHook.Config["player.team.chams.invisible_overlay"]) then
-                    local clr = RoachHook.Config["player.team.chams.invisible_overlay.color"]
-                    local mat = RoachHook.Config["player.team.chams.invisible_overlay.mat"]
-    
-                    if(mat != 1) then
-                        render.MaterialOverride(overlay[mat])
-                        render.SuppressEngineLighting(false)
-                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                        render.SetBlend((clr.a - 0.01) / 255)
-        
-                        v:SetColor(plrTransColor)
-                        v:DrawModel()
-                    end
-                end
-            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
-                local clr = RoachHook.Config["player.enemy.chams.invisible_chams.color"]
-                local mat = RoachHook.Config["player.enemy.chams.invisible_chams.mat"]
-
-                render.MaterialOverride(mats[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend((clr.a - 0.01) / 255)
-
-                v:SetColor(plrTransColor)
-                v:DrawModel()
-
-                if(RoachHook.Config["player.enemy.chams.invisible_overlay"]) then
-                    local clr = RoachHook.Config["player.enemy.chams.invisible_overlay.color"]
-                    local mat = RoachHook.Config["player.enemy.chams.invisible_overlay.mat"]
-    
-                    if(mat != 1) then
-                        render.MaterialOverride(overlay[mat])
-                        render.SuppressEngineLighting(false)
-                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                        render.SetBlend((clr.a - 0.01) / 255)
-        
-                        v:SetColor(plrTransColor)
-                        v:DrawModel()
-                    end
-                end
-            end
-        end
-        
-        cam.IgnoreZ(false)
-
-    cam.End3D()
-
-    -- Visible Chams
-    cam.Start3D()
-
-        for k,v in ipairs(player.GetAll()) do
-            v:SetColor(color_white)
-            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
-            
-            if(!v:Alive() || v:IsDormant()) then continue end
-
-            if(v == me) then continue end
-                
-            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
-                local clr = RoachHook.Config["player.team.chams.visible_chams.color"]
-                local mat = RoachHook.Config["player.team.chams.visible_chams.mat"]
-
-                render.MaterialOverride(mats[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend(clr.a / 255)
-
-                v:SetColor(Color(255, 255, 255, 0))
-                v:DrawModel()
-                
-                if(RoachHook.Config["player.team.chams.visible_overlay"]) then
-                    local clr = RoachHook.Config["player.team.chams.visible_overlay.color"]
-                    local mat = RoachHook.Config["player.team.chams.visible_overlay.mat"]
-    
-                    if(mat != 1) then
-                        render.MaterialOverride(overlay[mat])
-                        render.SuppressEngineLighting(false)
-                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                        render.SetBlend(clr.a / 255)
-        
-                        v:SetColor(Color(255, 255, 255, 0))
-                        v:DrawModel()
-                    end
-                end
-            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
-                local clr = RoachHook.Config["player.enemy.chams.visible_chams.color"]
-                local mat = RoachHook.Config["player.enemy.chams.visible_chams.mat"]
-
-                render.MaterialOverride(mats[mat])
-                render.SuppressEngineLighting(mat == 3)
-                render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                render.SetBlend(clr.a / 255)
-
-                v:SetColor(Color(255, 255, 255, 0))
-                v:DrawModel()
-                
-                if(RoachHook.Config["player.enemy.chams.visible_overlay"]) then
-                    local clr = RoachHook.Config["player.enemy.chams.visible_overlay.color"]
-                    local mat = RoachHook.Config["player.enemy.chams.visible_overlay.mat"]
-    
-                    if(mat != 1) then
-                        render.MaterialOverride(overlay[mat])
-                        render.SuppressEngineLighting(false)
-                        render.SetColorModulation(clr.r / 255, clr.g / 255, clr.b / 255)
-                        render.SetBlend(clr.a / 255)
-        
-                        v:SetColor(Color(255, 255, 255, 0))
-                        v:DrawModel()
-                    end
-                end
-            end
-        end
-
-    cam.End3D()
-end
-hook.Add("RenderScreenspaceEffects", "Chams", function()
-    if(RoachHook.Config["misc.b_obs_proof"]) then return end
-    
-    for k,v in ipairs(RoachHook.RenderScreenspaceEffectsHook) do v() end
-    RenderChams()
-end)
-
-RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
-    if(!RoachHook.Config["misc.b_obs_proof"] || gui.IsGameUIVisible()) then return end
-    
-    RenderChams()
-end
 
 local function Drawing()
     for k=1,#RoachHook.OverlayHook do RoachHook.OverlayHook[k]() end
