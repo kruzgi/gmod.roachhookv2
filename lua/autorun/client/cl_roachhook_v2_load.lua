@@ -48,7 +48,7 @@ file.CreateDir("roachhook/config")
 file.CreateDir("roachhook/scripts")
 
 RoachHook = RoachHook || {}
-RoachHook.CheatVer = "2.0.5.0"
+RoachHook.CheatVer = "2.0.5.3"
 RoachHook.CheatVerShort = "2"
 RoachHook.Detour = table.Copy(_G)
 RoachHook.Config = RoachHook.Config || {}
