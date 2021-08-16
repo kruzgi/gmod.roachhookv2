@@ -1,5 +1,7 @@
 local tauntTimer = CurTime()
 local tauntSZID = {ACT_GMOD_GESTURE_BOW, ACT_GMOD_TAUNT_MUSCLE, ACT_GMOD_GESTURE_BECON, ACT_GMOD_TAUNT_LAUGH, ACT_GMOD_TAUNT_PERSISTENCE, ACT_GMOD_GESTURE_DISAGREE, ACT_GMOD_GESTURE_AGREE, ACT_GMOD_GESTURE_WAVE, ACT_GMOD_TAUNT_DANCE}
+
+local cvar_gamemode = GetConVar("gamemode")
 hook.Add("Tick", "ForceTaunt", function()
     if(cvar_gamemode:GetString() != "darkrp") then return end
     if(!RoachHook.Config["misc.fun.b_force_taunt"] || !RoachHook.Config["misc.fun.b_force_taunt.i_taunt"]) then return end
@@ -61,36 +63,31 @@ RoachHook.Detour.hook.Add("PrePlayerDraw", "robot_taunt", function(plr)
         bStartedTaunt = false
     end
 end)
-RoachHook.Detour.hook.Add("PostPlayerDraw", "AnimationFixPost", function()
-    if(plr == RoachHook.Detour.LocalPlayer()) then
-        
-    end
-end)
 local lastTickCount = nil
 RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
     if(plr == RoachHook.Detour.LocalPlayer()) then
         if(RoachHook.DrawingFake) then return end
 
-        if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
-            plr:InvalidateBoneCache()
+        -- if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
+        --     plr:InvalidateBoneCache()
     
-                plr:SetPoseParameter("aim_yaw", 0)
-                plr:SetPoseParameter("head_yaw", 0)
+        --         plr:SetPoseParameter("aim_yaw", 0)
+        --         plr:SetPoseParameter("head_yaw", 0)
     
-                plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-                plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
+        --         plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
+        --         plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
     
-                local vel = plr:GetVelocity():Length2D()
-                local velScale = math.Clamp(vel / 60, 0, 1)
-                local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+        --         local vel = plr:GetVelocity():Length2D()
+        --         local velScale = math.Clamp(vel / 60, 0, 1)
+        --         local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
     
-                plr:SetPoseParameter("move_x", velocity.x)
-                plr:SetPoseParameter("move_y", -velocity.y)
+        --         plr:SetPoseParameter("move_x", velocity.x)
+        --         plr:SetPoseParameter("move_y", -velocity.y)
     
-                plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
+        --         plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
                 
-            plr:SetupBones()
-        end
+        --     plr:SetupBones()
+        -- end
     else
         if(!plr || !plr:Alive() || plr:IsDormant()) then return end
         if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then return end

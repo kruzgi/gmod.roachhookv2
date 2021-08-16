@@ -177,6 +177,8 @@ end
 
 RoachHook.bFakeFlick_Timer = 0
 local bDidSwitch = false
+RoachHook.aaLBYTimer = 0
+local LBYSide = false
 RoachHook.Features.Ragebot.AntiAim = function(cmd)
     if(!RoachHook.Config["antiaim.b_enable"]) then return end
 
@@ -325,6 +327,11 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
             ))
         end
     else
+        local lbytime = 1
+        if(LocalPlayer():GetVelocity():Length2D() > 5) then
+            lbytime = math.huge
+        end
+        
         if(mod) then
             cmd:SetViewAngles(Angle(
                 pitch[iPitch],
@@ -337,6 +344,16 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
                 base_yaw[iBaseYaw] + yaw[iYawReal],
                 0
             ))
+        end
+        
+        if(RoachHook.aaLBYTimer + lbytime <= CurTime()) then
+            cmd:SetViewAngles(Angle(
+                89,
+                cmd:GetViewAngles().y + (120 * (LBYSide && -1 || 1)),
+                0
+            ))
+            RoachHook.aaLBYTimer = CurTime()
+            LBYSide = !LBYSide
         end
     end
 end

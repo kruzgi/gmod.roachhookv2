@@ -323,6 +323,12 @@ local function RagebotCanFire()
     return RoachHook.Helpers.CanFire()
 end
 
+local function GetPredictedVector(plr)
+    local ticksDifference = RoachHook.Helpers.TICKS_TO_TIME(math.floor(RoachHook.Helpers.TIME_TO_TICKS(LocalPlayer():Ping() / 1000)))
+    print(ticksDifference)
+    return plr:GetVelocity() * ticksDifference
+end
+
 local bDidSwitch = false
 RoachHook.Features.Ragebot.Aimbot = function(cmd)
     if(!RoachHook.Config["ragebot.b_enable"]) then return end
@@ -332,7 +338,7 @@ RoachHook.Features.Ragebot.Aimbot = function(cmd)
     if(!pos || !plr) then return end
     
     if(RagebotCanFire() && ((bDidSwitch && !bSendPacket) || LocalPlayer():GetActiveWeapon():GetClass() == "weapon_physgun")) then
-        local angle = (pos - LocalPlayer():EyePos()):Angle()
+        local angle = ((pos + GetPredictedVector(plr)) - LocalPlayer():EyePos()):Angle()
         cmd:SetViewAngles(angle)
         cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
         if(!RoachHook.Config["ragebot.b_silent"]) then

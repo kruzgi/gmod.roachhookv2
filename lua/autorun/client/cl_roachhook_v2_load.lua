@@ -1336,18 +1336,6 @@ RoachHook.Detour.hook.Add("Think", "UpdatePressedKeys", function()
     end
 end)
 
-local function GetAdminsCount()
-    local num = 0
-    local players = player.GetAll()
-    for k = 0, #players do
-        local v = players[k]
-        if(!v) then continue end
-
-        if(v:IsSuperAdmin() || v:IsAdmin()) then num = num + 1 end
-    end
-    return num
-end
-
 local cl_interp, cl_updaterate, cl_interp_ratio = GetConVar("cl_interp"), GetConVar("cl_updaterate"), GetConVar("cl_interp_ratio")
 RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     if(!LocalPlayer():Alive()) then bSendPacket = true return end

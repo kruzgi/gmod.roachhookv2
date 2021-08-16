@@ -631,6 +631,17 @@ local function Indicators()
             text = "AntiAim",
             value = fakeDelta / 180
         }
+
+        
+        local lbytime = 1
+        if(LocalPlayer():GetVelocity():Length2D() < 5) then
+            local lbyTimer = CurTime() - RoachHook.aaLBYTimer / lbytime
+            
+            indicatorsToDraw[#indicatorsToDraw + 1] = {
+                text = "LBY",
+                value = lbyTimer
+            }
+        end
     end
 
     if(RoachHook.Config["antiaim.b_fake_flick"] && RoachHook.PressedVars["antiaim.b_fake_flick.key"]) then
