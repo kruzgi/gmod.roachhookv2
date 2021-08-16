@@ -632,14 +632,12 @@ local function Indicators()
             value = fakeDelta / 180
         }
 
-        
-        local lbytime = 1
         if(LocalPlayer():GetVelocity():Length2D() < 5) then
-            local lbyTimer = CurTime() - RoachHook.aaLBYTimer / lbytime
+            local lbyTimer = (CurTime() - RoachHook.aaLBYTimer) / RoachHook.LBYTime
             
             indicatorsToDraw[#indicatorsToDraw + 1] = {
                 text = "LBY",
-                value = lbyTimer
+                value = math.Clamp(lbyTimer, 0, 1)
             }
         end
     end

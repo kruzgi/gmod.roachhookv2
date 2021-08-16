@@ -591,6 +591,80 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
             }
         },
         {
+            name = "Camera",
+            items = {
+                Menu.NewCheckbox("Free Cam", "misc.camera.b_freecam", false),
+                Menu.NewSliderInt("Free Cam Speed", "misc.camera.b_freecam.speed", 15, 5, 300, "%d u/s", function()
+                    return RoachHook.Config["misc.camera.b_freecam"]
+                end),
+
+                Menu.NewCheckbox("Thirdperson", "misc.camera.b_thirdperson", false, nil, nil, nil, nil, true, nil, "hold"),
+                Menu.NewSliderInt("Thirdperson Distance", "misc.camera.b_thirdperson.i_dist", 115, 90, 300, nil, function()
+                    return RoachHook.Config["misc.camera.b_thirdperson"]
+                end),
+                
+                Menu.NewSliderInt("FOV", "misc.camera.i_fov", 0, 0, 60, "%d°"),
+                Menu.NewCheckbox("Force FOV", "misc.camera.b_force_fov", false),
+            }
+        },
+        {
+            name = "Radar",
+            items = {
+                Menu.NewCheckbox("Enable Radar", "misc.radar.b_enable", false, nil, true, false, Color(255, 255, 255)),
+                Menu.NewCheckbox("Radar Background", "misc.radar.b_bg", true, function()
+                    return RoachHook.Config["misc.radar.b_enable"]
+                end, true, true, Color(0, 0, 0)),
+                Menu.NewSliderInt("Radar Zoom", "misc.radar.i_zoom", 5, 0, 30, "%d", function()
+                    return RoachHook.Config["misc.radar.b_enable"]
+                end),
+                Menu.NewCheckbox("Radar Rotation", "misc.radar.b_rot", true, function()
+                    return RoachHook.Config["misc.radar.b_enable"]
+                end),
+                Menu.NewSliderInt("Radar Scale", "misc.radar.i_scl", 100, 50, 200, "%d%%", function()
+                    return RoachHook.Config["misc.radar.b_enable"]
+                end),
+                Menu.NewMultiCombo("Radar Filter", "misc.radar.filter", {
+                    "Player",
+                    "NPC",
+                    "Entity",
+                }, {true, false, false}, function()
+                    return RoachHook.Config["misc.radar.b_enable"]
+                end, nil, true, false, Color(255, 255, 255)),
+                Menu.NewMultiCombo("Entities", "misc.radar.filter.sents", RoachHook.MapEntities, {}, function()
+                    return RoachHook.Config["misc.radar.b_enable"] && RoachHook.Config["misc.radar.filter"][3]
+                end, function()
+                    return RoachHook.Helpers.GetMapEntities()
+                end),
+                Menu.NewCheckbox("Radar Use Team Colors", "misc.radar.b_team_clrs", true, function()
+                    return RoachHook.Config["misc.radar.b_enable"] && RoachHook.Config["misc.radar.filter"][1]
+                end)
+            }
+        },
+        {
+            name = "Overlays",
+            items = {
+                Menu.NewCheckbox("Anticheat detection window (WIP)", "misc.b_ac_detection_window", false),
+                Menu.NewCheckbox("Keybind State", "misc.b_keybinds", false),
+                Menu.NewCheckbox("Admins window", "misc.b_admins_window", false),
+                Menu.NewCheckbox("Spectators window", "misc.b_specs_window", false),
+                Menu.NewCheckbox("Only spectating myself", "misc.b_specs_window.self", true, function()
+                    return RoachHook.Config["misc.b_specs_window"]
+                end),
+                Menu.NewCheckbox("Indicators", "misc.b_indicators", false),
+                Menu.NewCheckbox("Logs", "misc.b_logs", false),
+                Menu.NewMultiCombo("Log list", "misc.b_logs.logs", {
+                    "Misses",
+                    "Aimbot Shots",
+                    "Player Spawns",
+                    "Player Hurt",
+                    "Player Death",
+                }, {}, function()
+                    return RoachHook.Config["misc.b_logs"]
+                end),
+                Menu.NewCheckbox("AntiAim Lines", "visual.b_aa_lines", false),
+            }
+        },
+        {
             name = "Other",
             items = {
                 Menu.NewMultiCombo("Removals", "visual.removals", {
@@ -925,23 +999,6 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
             }
         },
         {
-            name = "Camera",
-            items = {
-                Menu.NewCheckbox("Free Cam", "misc.camera.b_freecam", false),
-                Menu.NewSliderInt("Free Cam Speed", "misc.camera.b_freecam.speed", 15, 5, 300, "%d u/s", function()
-                    return RoachHook.Config["misc.camera.b_freecam"]
-                end),
-
-                Menu.NewCheckbox("Thirdperson", "misc.camera.b_thirdperson", false, nil, nil, nil, nil, true, nil, "hold"),
-                Menu.NewSliderInt("Thirdperson Distance", "misc.camera.b_thirdperson.i_dist", 115, 90, 300, nil, function()
-                    return RoachHook.Config["misc.camera.b_thirdperson"]
-                end),
-                
-                Menu.NewSliderInt("FOV", "misc.camera.i_fov", 0, 0, 60, "%d°"),
-                Menu.NewCheckbox("Force FOV", "misc.camera.b_force_fov", false),
-            }
-        },
-        {
             name = "Clientside",
             items = {
                 Menu.NewCheckbox("Taunt (Clientsided)", "misc.b_taunt", false),
@@ -957,62 +1014,6 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     "Swim",
                 }, 1, function()
                     return RoachHook.Config["misc.b_taunt"]
-                end),
-            }
-        },
-        {
-            name = "Radar",
-            items = {
-                Menu.NewCheckbox("Enable Radar", "misc.radar.b_enable", false, nil, true, false, Color(255, 255, 255)),
-                Menu.NewCheckbox("Radar Background", "misc.radar.b_bg", true, function()
-                    return RoachHook.Config["misc.radar.b_enable"]
-                end, true, true, Color(0, 0, 0)),
-                Menu.NewSliderInt("Radar Zoom", "misc.radar.i_zoom", 5, 0, 30, "%d", function()
-                    return RoachHook.Config["misc.radar.b_enable"]
-                end),
-                Menu.NewCheckbox("Radar Rotation", "misc.radar.b_rot", true, function()
-                    return RoachHook.Config["misc.radar.b_enable"]
-                end),
-                Menu.NewSliderInt("Radar Scale", "misc.radar.i_scl", 100, 50, 200, "%d%%", function()
-                    return RoachHook.Config["misc.radar.b_enable"]
-                end),
-                Menu.NewMultiCombo("Radar Filter", "misc.radar.filter", {
-                    "Player",
-                    "NPC",
-                    "Entity",
-                }, {true, false, false}, function()
-                    return RoachHook.Config["misc.radar.b_enable"]
-                end, nil, true, false, Color(255, 255, 255)),
-                Menu.NewMultiCombo("Entities", "misc.radar.filter.sents", RoachHook.MapEntities, {}, function()
-                    return RoachHook.Config["misc.radar.b_enable"] && RoachHook.Config["misc.radar.filter"][3]
-                end, function()
-                    return RoachHook.Helpers.GetMapEntities()
-                end),
-                Menu.NewCheckbox("Radar Use Team Colors", "misc.radar.b_team_clrs", true, function()
-                    return RoachHook.Config["misc.radar.b_enable"] && RoachHook.Config["misc.radar.filter"][1]
-                end)
-            }
-        },
-        {
-            name = "Overlays",
-            items = {
-                Menu.NewCheckbox("Anticheat detection window (WIP)", "misc.b_ac_detection_window", false),
-                Menu.NewCheckbox("Keybind State", "misc.b_keybinds", false),
-                Menu.NewCheckbox("Admins window", "misc.b_admins_window", false),
-                Menu.NewCheckbox("Spectators window", "misc.b_specs_window", false),
-                Menu.NewCheckbox("Only spectating myself", "misc.b_specs_window.self", true, function()
-                    return RoachHook.Config["misc.b_specs_window"]
-                end),
-                Menu.NewCheckbox("Indicators", "misc.b_indicators", false),
-                Menu.NewCheckbox("Logs", "misc.b_logs", false),
-                Menu.NewMultiCombo("Log list", "misc.b_logs.logs", {
-                    "Misses",
-                    "Aimbot Shots",
-                    "Player Spawns",
-                    "Player Hurt",
-                    "Player Death",
-                }, {}, function()
-                    return RoachHook.Config["misc.b_logs"]
                 end),
             }
         },
@@ -1070,16 +1071,6 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 }, 5),
                 Menu.NewSliderInt("DPI Scale", "misc.i_selected_dpi_scale.custom", 125, 50, 500, "%d%%", function()
                     return RoachHook.Config["misc.i_selected_dpi_scale"] == 8
-                end),
-
-                Menu.NewCheckbox("Menu Background", "misc.b_background", false, nil, true, true, Color(0, 0, 0, 64)),
-                Menu.NewCheckbox("Enable Background Animation", "misc.b_bg_anim", false, function()
-                    return RoachHook.Config["misc.b_background"]
-                end, true, true, Color(255, 255, 255)),
-                Menu.NewCombo("Menu Background Animation", "misc.b_background.i_selected_bg_anim", {
-                    "Snow Flakes",
-                }, 1, function()
-                    return RoachHook.Config["misc.b_background"] && RoachHook.Config["misc.b_bg_anim"]
                 end),
 
                 Menu.NewCheckbox("Bypass command checks", "misc.b_cmd_checks_bypass", false),
@@ -1401,11 +1392,16 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     if(RoachHook.Config["visual.removals"] && RoachHook.Config["visual.removals"][3] && cmd:KeyDown(IN_ATTACK)) then
         
     else
-        if(bSendPacket) then
-            RoachHook.AntiAimData.fake = cmd:GetViewAngles()
-            RoachHook.LastSentPos = LocalPlayer():GetPos()
-        else
+        if(cmd:KeyDown(IN_ATTACK)) then
             RoachHook.AntiAimData.real = cmd:GetViewAngles()
+            RoachHook.AntiAimData.fake = cmd:GetViewAngles()
+        else
+            if(bSendPacket) then
+                RoachHook.AntiAimData.fake = cmd:GetViewAngles()
+                RoachHook.LastSentPos = LocalPlayer():GetPos()
+            else
+                RoachHook.AntiAimData.real = cmd:GetViewAngles()
+            end
         end
     end
 
@@ -1450,21 +1446,6 @@ local function Drawing()
 
     for k,v in pairs(RoachHook.DrawBehindMenu) do v() end
     if(RoachHook.bMenuVisible) then
-        if(RoachHook.Config["misc.b_background"]) then
-            local clr = RoachHook.Config["misc.b_background.color"]
-    
-            RoachHook.Detour.surface.SetDrawColor(clr)
-            RoachHook.Detour.surface.DrawRect(0, 0, ScrW(), ScrH())
-    
-            local iBackgroundAnimation = RoachHook.Config["misc.b_background.i_selected_bg_anim"]
-    
-            if(RoachHook.Config["misc.b_bg_anim"]) then
-                if(backgroundAnimations[iBackgroundAnimation]) then
-                    backgroundAnimations[iBackgroundAnimation]()
-                end
-            end
-        end
-
         RoachHook.frame:Draw()
         
         do
