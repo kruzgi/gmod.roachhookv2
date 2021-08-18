@@ -16,30 +16,6 @@ function RoachHook_IncludeFile(fil)
     return func
 end
 
-local bigSetup = {
-    ChangeName = function() return end,
-    FinishPrediction = function() return end,
-    FullUpdate = function() return end,
-    GetChokedPackets = function() return 0 end,
-    GetInSequenceNumber = function() return 0 end,
-    GetLatency = function() return 0 end,
-    GetOutSequenceNumber = function() return 0 end,
-    GetSpreadVector = function() return Vector() end,
-    HookProp = function() return end,
-    MD5PseudoRandom = function() return 0 end,
-    RandomFloat = function() return 0 end,
-    RandomInt = function() return 0 end,
-    RandomSeed = function() return 0 end,
-    SetChokedPackets = function() return end,
-    SetInSequenceNumber = function() return end,
-    SetInterpolation = function() return end,
-    SetOutSequenceNumber = function() return end,
-    StartPrediction = function() return end,
-    StringCmd = function() return end,
-    TickCount = function() return 0 end,
-    UnhookProp = function() return end,
-}
-
 bSendPacket = true
 
 file.CreateDir("roachhook")
@@ -52,7 +28,7 @@ RoachHook.CheatVer = "2.0.5.3"
 RoachHook.CheatVerShort = "2"
 RoachHook.Detour = table.Copy(_G)
 RoachHook.Config = RoachHook.Config || {}
-RoachHook.Config["madeby"] = "admin"
+RoachHook.Config["madeby"] = "unknown"
 RoachHook.Config["cheatver"] = RoachHook.CheatVer
 RoachHook.iWishTicks = 0
 
@@ -67,7 +43,9 @@ end)
 RoachHook.AntiAimData = {
     real = Angle(),
     fake = Angle(),
-    current = Angle()
+    current = Angle(),
+    nonLBYReal = Angle(),
+    LBY = Angle(),
 }
 RoachHook.LastSentPos = Vector()
 RoachHook.Features = {}
@@ -113,16 +91,42 @@ RoachHook.bMenuVisible = false
 RoachHook.bMenuVisibleLast = !RoachHook.bMenuVisible
 RoachHook.bMenuKeyClicked = false
 RoachHook.Modules = {}
-RoachHook.Modules.Big = bigSetup
+RoachHook.Modules.Big = {
+    ChangeName = function() return end,
+    FinishPrediction = function() return end,
+    FullUpdate = function() return end,
+    GetChokedPackets = function() return 0 end,
+    GetInSequenceNumber = function() return 0 end,
+    GetLatency = function() return 0 end,
+    GetOutSequenceNumber = function() return 0 end,
+    GetSpreadVector = function() return Vector() end,
+    HookProp = function() return end,
+    MD5PseudoRandom = function() return 0 end,
+    RandomFloat = function() return 0 end,
+    RandomInt = function() return 0 end,
+    RandomSeed = function() return 0 end,
+    SetChokedPackets = function() return end,
+    SetInSequenceNumber = function() return end,
+    SetInterpolation = function() return end,
+    SetOutSequenceNumber = function() return end,
+    StartPrediction = function() return end,
+    StringCmd = function() return end,
+    TickCount = function() return 0 end,
+    UnhookProp = function() return end,
+}
 RoachHook.SilentAimbot = RoachHook.SilentAimbot || nil
 RoachHook.ServerTime = nil
 
 local moduleLoadTimer = CurTime()
 hook.Add("Think", "AntiCrashModules", function()
     if(!LocalPlayer() || !IsValid(LocalPlayer())) then return end
-    if(moduleLoadTimer + 0.2 <= CurTime()) then
+    if(moduleLoadTimer + 0.5 <= CurTime()) then
         require("big")
-        RoachHook.Modules.Big = big
+        if(big) then
+            RoachHook.Modules.Big = big
+        else
+            print("AN ERROR OCCURED WHILE TRYING TO INCLUDE 'big' MODULE")
+        end
         hook.Remove("Think", "AntiCrashModules")
     end
 end)
@@ -185,6 +189,8 @@ RoachHook_IncludeFile("roachhook/visual/world.lua")
 RoachHook_IncludeFile("roachhook/visual/view.lua")
 RoachHook_IncludeFile("roachhook/visual/animations.lua")
 RoachHook_IncludeFile("roachhook/visual/chams.lua")
+RoachHook_IncludeFile("roachhook/visual/oof_arrows.lua")
+RoachHook_IncludeFile("roachhook/visual/aa_lines.lua")
 
 RoachHook_IncludeFile("roachhook/misc/movement.lua")
 RoachHook_IncludeFile("roachhook/misc/net_dump.lua")
@@ -400,8 +406,12 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
     {"Ragebot",     RoachHook.Detour.Material("ragebot.png"), {
         {
             name = "Rage Aimbot",
+            customH = 480,
             items = {
                 Menu.NewCheckbox("Enable Ragebot", "ragebot.b_enable", false),
+                Menu.NewCheckbox("Engine Prediction", "ragebot.b_engine_pred", true, function()
+                    return RoachHook.Config["ragebot.b_enable"]
+                end),
                 Menu.NewCheckbox("Silent", "ragebot.b_silent", true, function()
                     return RoachHook.Config["ragebot.b_enable"]
                 end),
@@ -651,6 +661,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     return RoachHook.Config["misc.b_specs_window"]
                 end),
                 Menu.NewCheckbox("Indicators", "misc.b_indicators", false),
+                Menu.NewCheckbox("Watermark", "misc.b_watermark", true),
                 Menu.NewCheckbox("Logs", "misc.b_logs", false),
                 Menu.NewMultiCombo("Log list", "misc.b_logs.logs", {
                     "Misses",
@@ -662,6 +673,7 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     return RoachHook.Config["misc.b_logs"]
                 end),
                 Menu.NewCheckbox("AntiAim Lines", "visual.b_aa_lines", false),
+                Menu.NewCheckbox("OOF Arrows", "visual.b_oof_arrows", false, nil, true, true, Color(255, 255, 255)),
             }
         },
         {
@@ -1253,10 +1265,12 @@ local defVars = {
 }
 RoachHook.Detour.hook.Add("Think", "UpdatePlayerListVars", function()
     if(!RoachHook.Config["misc.i_selected_player"]) then return end
-    local items = RoachHook.frame.Tabs[5][3][7].items
+    local items = RoachHook.frame.Tabs[5][3][4].items
+    
+    if(!items) then return end
     for k,v in pairs(items) do
         if(defVars[v.name]) then
-            RoachHook.frame.Tabs[5][3][7].items[k].var = defVars[v.name] .. "." .. RoachHook.Config["misc.i_selected_player"]
+            RoachHook.frame.Tabs[5][3][4].items[k].var = defVars[v.name] .. "." .. RoachHook.Config["misc.i_selected_player"]
         end
     end
 end)
@@ -1327,6 +1341,7 @@ RoachHook.Detour.hook.Add("Think", "UpdatePressedKeys", function()
     end
 end)
 
+RoachHook.AntiAim_WasLBY = false
 local cl_interp, cl_updaterate, cl_interp_ratio = GetConVar("cl_interp"), GetConVar("cl_updaterate"), GetConVar("cl_interp_ratio")
 RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     if(!LocalPlayer():Alive()) then bSendPacket = true return end
@@ -1342,6 +1357,8 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
         cmd:SetButtons(0)
     end
     
+    RoachHook.AntiAim_WasLBY = false
+
     if(cmd:CommandNumber() == 0) then
         if((RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"])) then
             cmd:SetViewAngles(RoachHook.AntiAimData.real)
@@ -1366,7 +1383,9 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     RoachHook.Features.Misc.Bunnyhop(cmd)
     //RoachHook.Features.Misc.FreeCam(cmd)
     
-    RoachHook.Modules.Big.StartPrediction(cmd)
+    if(RoachHook.Config["ragebot.b_engine_pred"]) then
+        RoachHook.Modules.Big.StartPrediction(cmd)
+    end
     
     RoachHook.Features.Legitbot.Aimbot(cmd)
 
@@ -1385,6 +1404,7 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     
     if(!RoachHook.Config["fakelag.b_enable"]) then
         RoachHook.AntiAimData.real = cmd:GetViewAngles()
+        RoachHook.AntiAimData.nonLBYReal = cmd:GetViewAngles()
         RoachHook.AntiAimData.fake = cmd:GetViewAngles()
         RoachHook.LastSentPos = LocalPlayer():GetPos()
     end
@@ -1401,11 +1421,16 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
                 RoachHook.LastSentPos = LocalPlayer():GetPos()
             else
                 RoachHook.AntiAimData.real = cmd:GetViewAngles()
+                if(!RoachHook.AntiAim_WasLBY) then
+                    RoachHook.AntiAimData.nonLBYReal = cmd:GetViewAngles()
+                end
             end
         end
     end
 
-    RoachHook.Modules.Big.FinishPrediction(cmd)
+    if(RoachHook.Config["ragebot.b_engine_pred"]) then
+        RoachHook.Modules.Big.FinishPrediction(cmd)
+    end
 
     RoachHook.Features.Misc.Autostrafer(cmd)
     local RawAngles = cmd:GetViewAngles()
@@ -1447,33 +1472,6 @@ local function Drawing()
     for k,v in pairs(RoachHook.DrawBehindMenu) do v() end
     if(RoachHook.bMenuVisible) then
         RoachHook.frame:Draw()
-        
-        do
-            local name = "unknown"
-            if(RoachHook.Detour.LocalPlayer() && RoachHook.Detour.LocalPlayer():Name()) then name = RoachHook.Detour.LocalPlayer():Name() end
-
-            local text = RoachHook.Detour.string.format("roachhook v%s | user: %s | date: %s", RoachHook.CheatVer, name, os.date("%d/%m/%Y - %H:%M:%S"))
-            surface.SetFont("Menu.UnderText")
-            local textW, textH = surface.GetTextSize(text)
-            
-            local x, y, w, h = RoachHook.frame.x, RoachHook.frame.y + (RoachHook.frame.h * RoachHook.DPIScale), (RoachHook.frame.w * RoachHook.DPIScale), textH + (4 * RoachHook.DPIScale)
-            local y = RoachHook.Detour.math.floor(y) - 1
-            RoachHook.Detour.draw.RoundedBoxEx(3, x, y, w, h, Color(60, 60, 60), false, false, true, true)
-            RoachHook.Detour.draw.RoundedBoxEx(3, x + 1, y + 1, w - 2, h - 2, Color(0, 0, 0, 128), false, false, true, true)
-            RoachHook.Detour.draw.RoundedBoxEx(3, x + 2, y + 2, w - 4, h - 4, Color(35, 35, 35), false, false, true, true)
-
-            RoachHook.Detour.draw.SimpleTextOutlined(
-                text,
-                "Menu.UnderText",
-                x + (5 * RoachHook.DPIScale),
-                y + h / 2,
-                color_white,
-                nil,
-                TEXT_ALIGN_CENTER,
-                1,
-                color_black
-            )
-        end
     end
 end
 

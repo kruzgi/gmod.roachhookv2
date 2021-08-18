@@ -179,7 +179,7 @@ RoachHook.bFakeFlick_Timer = 0
 local bDidSwitch = false
 RoachHook.aaLBYTimer = 0
 local LBYSide = false
-RoachHook.LBYTime = 0.35
+RoachHook.LBYTime = 1.1
 RoachHook.Features.Ragebot.AntiAim = function(cmd)
     if(!RoachHook.Config["antiaim.b_enable"]) then return end
 
@@ -278,6 +278,7 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
                         0
                     ))
                 end
+                RoachHook.AntiAim_WasLBY = true
                 RoachHook.bFakeFlick_Timer = RoachHook.ServerTime + (RoachHook.Config["antiaim.b_fake_flick.fl_time"] || 1)
             else
                 if(mod) then
@@ -323,6 +324,7 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
                 ))
                 RoachHook.aaLBYTimer = CurTime()
                 LBYSide = !LBYSide
+                RoachHook.AntiAim_WasLBY = true
             end
         end
         
@@ -372,6 +374,8 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
             ))
             RoachHook.aaLBYTimer = CurTime()
             LBYSide = !LBYSide
+
+            RoachHook.AntiAim_WasLBY = true
         end
     end
 end

@@ -67,7 +67,6 @@ local lastTickCount = nil
 RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
     if(plr == RoachHook.Detour.LocalPlayer()) then
         if(RoachHook.DrawingFake) then return end
-
         -- if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
         --     plr:InvalidateBoneCache()
     

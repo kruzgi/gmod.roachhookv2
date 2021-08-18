@@ -315,6 +315,15 @@ local function ACDetection()
     if(bSecure) then
         RoachHook.Config["windows.acdetect_data"].anticheats[#RoachHook.Config["windows.acdetect_data"].anticheats + 1] = {name = "bSecure", bypassed = true}
     end
+    if(gAC) then
+        RoachHook.Config["windows.acdetect_data"].anticheats[#RoachHook.Config["windows.acdetect_data"].anticheats + 1] = {name = "GlorifiedAnticheat", bypassed = true}
+    end
+    if(CAC) then
+        RoachHook.Config["windows.acdetect_data"].anticheats[#RoachHook.Config["windows.acdetect_data"].anticheats + 1] = {name = "!cake", bypassed = true}
+    end
+    if(SwiftAC) then
+        RoachHook.Config["windows.acdetect_data"].anticheats[#RoachHook.Config["windows.acdetect_data"].anticheats + 1] = {name = "SwiftAC", bypassed = true}
+    end
     
     local w, h = RoachHook.Config["windows.acdetect_data"].w * RoachHook.DPIScale, 15 * RoachHook.DPIScale
     if(!RoachHook.Config["windows.acdetect_data"].x || !RoachHook.Config["windows.acdetect_data"].y) then
@@ -693,6 +702,66 @@ local function Indicators()
         surface.DrawOutlinedRect(x, y, w, h)
     end
 end
+local function Watermark()
+    if(!RoachHook.Config["windows.watermark_data"]) then
+        RoachHook.Config["windows.watermark_data"] = {
+            w = 50,
+        }
+    end
+    if(!RoachHook.Config["misc.b_watermark"]) then
+        RoachHook.Config["windows.watermark_data"].canClick = true
+
+        return
+    end
+    
+    local w, h = RoachHook.Config["windows.watermark_data"].w * RoachHook.DPIScale, 15 * RoachHook.DPIScale
+    
+    local x, y = ScrW() - (w + (5 * RoachHook.DPIScale)), 5 * RoachHook.DPIScale
+
+    local fx, fy = RoachHook.frame.x, RoachHook.frame.y
+    local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale
+    local frameHovered = RoachHook.Helpers.MouseInBox(fx, fy, fw, fh)
+    if(szClickedItem == "indi" && RoachHook.bMenuVisible && !frameHovered) then
+        local x, y = gui.MouseX(), gui.MouseY()
+
+        RoachHook.Config["windows.indicators_data"].x = x + RoachHook.Config["windows.indicators_data"].mouseDX
+        RoachHook.Config["windows.indicators_data"].y = y + RoachHook.Config["windows.indicators_data"].mouseDY
+
+        RoachHook.Config["windows.indicators_data"].x = math.Clamp(RoachHook.Config["windows.indicators_data"].x, 0, ScrW() - w)
+        RoachHook.Config["windows.indicators_data"].y = math.Clamp(RoachHook.Config["windows.indicators_data"].y, 0, ScrH() - h)
+    end
+
+    local clr = RoachHook.GetMenuTheme()
+    
+    draw.NoTexture()
+
+    surface.SetDrawColor(Color(0, 0, 0, 255 * 0.6))
+    surface.DrawRect(x, y, w, h)
+    surface.SetDrawColor(clr)
+    surface.DrawRect(x, y, w, 2)
+    surface.SetDrawColor(Color(255, 255, 255, 32))
+    surface.SetMaterial(RoachHook.Materials.gradient.left)
+    surface.DrawTexturedRect(x, y, w, 2)
+
+    local text = string.format("RoachHook v%s | fps: %d | ping %dms | %s", RoachHook.CheatVer, 1 / FrameTime(), RoachHook.Detour.LocalPlayer():Ping(), game.GetIPAddress())
+
+    surface.SetFont("Indicators.MainText")
+    local textSize = surface.GetTextSize(text)
+
+    RoachHook.Config["windows.watermark_data"].w = Lerp(FrameTime() * 5, RoachHook.Config["windows.watermark_data"].w, (textSize / RoachHook.DPIScale) + 10)
+
+    draw.SimpleTextOutlined(
+        text,
+        "Indicators.MainText",
+        x + (5 * RoachHook.DPIScale),
+        y + h / 2 - 1,
+        Color(255, 255, 255),
+        TEXT_ALIGN_LEFT,
+        TEXT_ALIGN_CENTER,
+        1,
+        Color(0, 0, 0)
+    )
+end
 
 RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
     Spectators()
@@ -700,6 +769,7 @@ RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
     ACDetection()
     KeybindState()
     Indicators()
+    Watermark()
 
     local fx, fy = RoachHook.frame.x, RoachHook.frame.y
     local fw, fh = RoachHook.frame.w * RoachHook.DPIScale, RoachHook.frame.h * RoachHook.DPIScale

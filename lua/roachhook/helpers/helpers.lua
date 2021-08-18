@@ -14,6 +14,31 @@ RoachHook.Helpers.GetPlayerListID = function(plr)
     end
     return id
 end
+RoachHook.Helpers.GenerateRotatedArrow = function(x, y, scale, ang)
+    local ang1 = Angle(0, ang, 0):Forward() * scale
+    local ang2 = Angle(0, ang + 120, 0):Forward() * (scale - 1)
+    local ang3 = Angle(0, ang - 120, 0):Forward() * (scale - 1)
+
+    local p0 = {x = x, y = y}
+    local poly = {
+        {x = p0.x + ang1.x, y = p0.y + ang1.y},
+        {x = p0.x + ang2.x, y = p0.y + ang2.y},
+        {x = p0.x + ang3.x, y = p0.y + ang3.y},
+    }
+    return poly
+end
+RoachHook.Helpers.DrawOutlinedPoly = function(poly)
+    local last = nil
+    for k,v in pairs(poly) do
+        if(last) then
+            surface.DrawLine(last.x, last.y, v.x, v.y)
+            last = v
+        else
+            last = v
+        end
+    end
+    surface.DrawLine(last.x, last.y, poly[1].x, poly[1].y)
+end
 
 local ignoredEntities = {
     ["env_skypaint"] = true,
