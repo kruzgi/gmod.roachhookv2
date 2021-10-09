@@ -1,33 +1,6 @@
 local playerFlags = {}
 local playerBars = {}
 
-local function DrawCorneredBox(x, y, w, h)
-    // TOP LEFT
-    surface.DrawLine(x, y, x + w / 3, y)
-    surface.DrawLine(x, y, x, y + h / 3)
-
-    // TOP RIGHT
-    surface.DrawLine(x + w - w / 3, y, x + w, y)
-    surface.DrawLine(x + w, y, x + w, y + h / 3)
-
-    // BOTTOM LEFT
-    surface.DrawLine(x, y + h, x + w / 3, y + h)
-    surface.DrawLine(x, y + h - h / 3, x, y + h)
-
-    // BOTTOM RIGHT
-    surface.DrawLine(x + w - w / 3, y + h, x + w, y + h)
-    surface.DrawLine(x + w, y + h - h / 3, x + w, y + h)
-end
-local function DrawOutlinedCorneredBox(x, y, w, h)
-    // TOP LEFT
-    surface.DrawRect(x, y, math.floor(w / 3) + 3, 3)
-    surface.DrawRect(x, y, 3, math.floor(h / 3) + 2)
-
-    // TOP RIGHT
-    surface.DrawRect(x + w - (math.floor(w / 3) + 2), y, math.floor(w / 3) + 3, 3)
-    surface.DrawRect(x + w - 2, y, 3, math.floor(h / 3) + 2)
-end
-
 local function DrawBBOX(v, bbox, team)
     if(!RoachHook.Config["player." .. team .. ".b_bbox"]) then return end
 
@@ -38,16 +11,104 @@ local function DrawBBOX(v, bbox, team)
     if(!borderClr) then return end
     borderClr.a = v:IsDormant() && borderClr.a / 8 || borderClr.a
 
-    if(RoachHook.Config["player." .. team .. ".b_bbox.outline"]) then
-        surface.SetDrawColor(borderClr)
-        surface.DrawOutlinedRect(bbox.x, bbox.y, bbox.w, bbox.h)
-        surface.DrawOutlinedRect(bbox.x + 2, bbox.y + 2, bbox.w - 4, bbox.h - 4)
+    local typ = RoachHook.Config["player." .. team .. ".b_bbox.type"] || 1
+
+    if(typ == 1) then
+        if(RoachHook.Config["player." .. team .. ".b_bbox.outline"]) then
+            surface.SetDrawColor(borderClr)
+            surface.DrawOutlinedRect(bbox.x, bbox.y, bbox.w, bbox.h)
+            surface.DrawOutlinedRect(bbox.x + 2, bbox.y + 2, bbox.w - 4, bbox.h - 4)
+    
+            surface.SetDrawColor(clr)
+            surface.DrawOutlinedRect(bbox.x + 1, bbox.y + 1, bbox.w - 2, bbox.h - 2)
+        else
+            surface.SetDrawColor(clr)
+            surface.DrawOutlinedRect(bbox.x, bbox.y, bbox.w, bbox.h)
+        end
+    elseif(typ == 2) then
+        if(RoachHook.Config["player." .. team .. ".b_bbox.outline"]) then
+            local x, y, w, h = bbox.x, bbox.y, bbox.w, bbox.h
+
+            local cW, cH = w / 3, h / 3
+            local cW, cH = math.floor(cW), math.floor(cH)
+            
+            surface.SetDrawColor(borderClr)
+
+            surface.DrawRect(x, y, cW, 3)
+            surface.DrawRect(x + w - cW, y, cW, 3)
+
+            surface.DrawRect(x, y, 3, cH)
+            surface.DrawRect(x + w - 3, y, 3, cH)
+
+            surface.DrawRect(x, y + h - 3, cW, 3)
+            surface.DrawRect(x + w - cW, y + h - 3, cW, 3)
+
+            surface.DrawRect(x, y + h - (cH + 3), 3, cH)
+            surface.DrawRect(x + w - 3, y + h - (cH + 3), 3, cH)
+            
+            surface.SetDrawColor(clr)
+            
+            surface.DrawRect(x + 1, y + 1, cW - 2, 1)
+            surface.DrawRect(x + 1, y + 1, 1, cH - 2)
+
+            surface.DrawRect(x + w - cW + 1, y + 1, cW - 2, 1)
+            surface.DrawRect(x + w - 2, y + 1, 1, cH - 2)
+
+            surface.DrawRect(x + 1, y + h - 2, cW - 2, 1)
+            surface.DrawRect(x + 1, y + h - (cH + 2), 1, cH)
+
+            surface.DrawRect(x + w - (cW - 1), y + h - 2, cW - 2, 1)
+            surface.DrawRect(x + w - 2, y + h - (cH + 2), 1, cH)
+        else
+            local x, y, w, h = bbox.x, bbox.y, bbox.w, bbox.h
+
+            local cW, cH = w / 3, h / 3
+            local cW, cH = math.floor(cW), math.floor(cH)
+
+            surface.SetDrawColor(clr)
+
+            surface.DrawRect(x, y, cW, 1)
+            surface.DrawRect(x + w - cW, y, cW, 1)
+
+            surface.DrawRect(x, y, 1, cH)
+            surface.DrawRect(x + w - 1, y, 1, cH)
+
+            surface.DrawRect(x, y + h - 1, cW, 1)
+            surface.DrawRect(x + w - cW, y + h - 1, cW, 1)
+
+            surface.DrawRect(x, y + h - (cH + 1), 1, cH)
+            surface.DrawRect(x + w - 1, y + h - (cH + 1), 1, cH)
+        end
+    elseif(typ == 3) then
+        local pos = v:GetPos()
+        local mins, maxs = v:GetCollisionBounds()
+        local corners = RoachHook.Helpers.GetCorners(mins, maxs)
+
+        local screenPositions = {}
+        for k,c in ipairs(corners) do
+            local corner = c
+            corner:Rotate(v == RoachHook.Detour.LocalPlayer() && Angle(0, RoachHook.SilentAimbot.y, 0) || v:GetRenderAngles())
+
+            local corner = corner + pos
+            screenPositions[k] = corner:ToScreen()
+        end
 
         surface.SetDrawColor(clr)
-        surface.DrawOutlinedRect(bbox.x + 1, bbox.y + 1, bbox.w - 2, bbox.h - 2)
-    else
-        surface.SetDrawColor(clr)
-        surface.DrawOutlinedRect(bbox.x, bbox.y, bbox.w, bbox.h)
+
+        surface.DrawLine(screenPositions[1].x, screenPositions[1].y, screenPositions[2].x, screenPositions[2].y)
+        surface.DrawLine(screenPositions[2].x, screenPositions[2].y, screenPositions[3].x, screenPositions[3].y)
+        surface.DrawLine(screenPositions[3].x, screenPositions[3].y, screenPositions[4].x, screenPositions[4].y)
+        surface.DrawLine(screenPositions[4].x, screenPositions[4].y, screenPositions[1].x, screenPositions[1].y)
+
+        surface.DrawLine(screenPositions[1].x, screenPositions[1].y, screenPositions[7].x, screenPositions[7].y)
+        surface.DrawLine(screenPositions[2].x, screenPositions[2].y, screenPositions[6].x, screenPositions[6].y)
+        surface.DrawLine(screenPositions[3].x, screenPositions[3].y, screenPositions[5].x, screenPositions[5].y)
+        surface.DrawLine(screenPositions[4].x, screenPositions[4].y, screenPositions[8].x, screenPositions[8].y)
+        
+        surface.DrawLine(screenPositions[5].x, screenPositions[5].y, screenPositions[6].x, screenPositions[6].y)
+        surface.DrawLine(screenPositions[6].x, screenPositions[6].y, screenPositions[7].x, screenPositions[7].y)
+        surface.DrawLine(screenPositions[7].x, screenPositions[7].y, screenPositions[8].x, screenPositions[8].y)
+        surface.DrawLine(screenPositions[8].x, screenPositions[8].y, screenPositions[5].x, screenPositions[5].y)
     end
 end
 local poss = {"left", "top", "right", "bottom"}
@@ -111,8 +172,8 @@ local function DrawAmmoBar(v, team)
         format = function(i) return string.format("%d / %d", ammo, ammomax) end,
     }
 end
-local function AddPlayerFlags(v, team)
-    if(!RoachHook.Config["player." .. team .. ".b_flags"]) then return end
+local function AddPlayerFlags(v, teamm)
+    if(!RoachHook.Config["player." .. teamm .. ".b_flags"]) then return end
     local flagos = {
         "Usergroup",
         "Ping",
@@ -120,19 +181,19 @@ local function AddPlayerFlags(v, team)
         "Traitor Finder",
     }
     local flagsClr = {
-        ["Usergroup"] = RoachHook.Config["player." .. team .. ".b_flags.selected_flags.color.1"],
-        ["Ping"] = RoachHook.Config["player." .. team .. ".b_flags.selected_flags.color.2"],
-        ["SteamID"] = RoachHook.Config["player." .. team .. ".b_flags.selected_flags.color.3"],
-        ["Traitor Finder"] = RoachHook.Config["player." .. team .. ".b_flags.selected_flags.color.4"],
+        ["Usergroup"] = RoachHook.Config["player." .. teamm .. ".b_flags.selected_flags.color.1"],
+        ["Ping"] = RoachHook.Config["player." .. teamm .. ".b_flags.selected_flags.color.2"],
+        ["SteamID"] = RoachHook.Config["player." .. teamm .. ".b_flags.selected_flags.color.3"],
+        ["Traitor Finder"] = RoachHook.Config["player." .. teamm .. ".b_flags.selected_flags.color.4"],
     }
     local flagsText = {
         ["Usergroup"] = v:GetUserGroup(),
         ["Ping"] = v:Ping() .. "ms",
-        ["SteamID"] = v:SteamID(),
+        ["SteamID"] = v:IsBot() && "BOT" || (v:SteamID() || "unknown steamid"),
         ["Traitor Finder"] = RoachHook.Helpers.IsTraitor(v) && "Traitor" || nil
     }
-    local pos = poss[RoachHook.Config["player." .. team .. ".b_flags.i_pos"]]
-    local flags = RoachHook.Config["player." .. team .. ".b_flags.selected_flags"]
+    local pos = poss[RoachHook.Config["player." .. teamm .. ".b_flags.i_pos"]]
+    local flags = RoachHook.Config["player." .. teamm .. ".b_flags.selected_flags"]
     
     for k,f in pairs(flags) do
         if(!f) then continue end
@@ -166,12 +227,12 @@ local function DrawBars(v, bbox)
         local x, y, w, h = bbox.x - (id * 5), bbox.y, 4, bbox.h
         local x, y, w, h = math.floor(x), math.floor(y), math.floor(w), math.floor(h) 
         
-        surface.SetDrawColor(Color(0, 0, 0, 96))
+        surface.SetDrawColor(Color(0, 0, 0, 128))
         surface.DrawRect(x, y, w, h)
 
         if(v.flip) then
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y + (h - (h * v.value)), w, h * v.value)
+            surface.DrawRect(x + 1, y + (h - (h * v.value)), w - 2, h * v.value)
 
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -190,7 +251,7 @@ local function DrawBars(v, bbox)
             end
         else
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y, w, h * v.value)
+            surface.DrawRect(x + 1, y, w - 2, h * v.value)
             
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -208,9 +269,6 @@ local function DrawBars(v, bbox)
                 end
             end
         end
-        
-        surface.SetDrawColor(Color(0, 0, 0, 192))
-        surface.DrawOutlinedRect(x, y, w, h)
 
         id = id + 1
     end
@@ -219,12 +277,12 @@ local function DrawBars(v, bbox)
         local x, y, w, h = bbox.x + bbox.w + (id * 5) + 1, bbox.y, 4, bbox.h
         local x, y, w, h = math.floor(x), math.floor(y), math.floor(w), math.floor(h) 
         
-        surface.SetDrawColor(Color(0, 0, 0, 96))
+        surface.SetDrawColor(Color(0, 0, 0, 128))
         surface.DrawRect(x, y, w, h)
 
         if(v.flip) then
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y + (h - (h * v.value)), w, h * v.value)
+            surface.DrawRect(x + 1, y + (h - (h * v.value)), w - 2, h * v.value)
             
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -243,7 +301,7 @@ local function DrawBars(v, bbox)
             end
         else
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y, w, h * v.value)
+            surface.DrawRect(x + 1, y, w - 2, h * v.value)
             
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -261,9 +319,6 @@ local function DrawBars(v, bbox)
                 end
             end
         end
-        
-        surface.SetDrawColor(Color(0, 0, 0, 192))
-        surface.DrawOutlinedRect(x, y, w, h)
 
         id = id + 1
     end
@@ -272,12 +327,12 @@ local function DrawBars(v, bbox)
         local x, y, w, h = bbox.x, bbox.y - (5 * id), bbox.w, 4
         local x, y, w, h = math.floor(x), math.floor(y), math.floor(w), math.floor(h) 
         
-        surface.SetDrawColor(Color(0, 0, 0, 96))
+        surface.SetDrawColor(Color(0, 0, 0, 128))
         surface.DrawRect(x, y, w, h)
 
         if(v.flip) then
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x + (w - (w * v.value)), y, w * v.value, h)
+            surface.DrawRect(x + (w - (w * v.value)), y + 1, w * v.value, h - 2)
             
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -296,7 +351,7 @@ local function DrawBars(v, bbox)
             end
         else
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y, w * v.value, h)
+            surface.DrawRect(x, y + 1, w * v.value, h - 2)
             
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -314,9 +369,6 @@ local function DrawBars(v, bbox)
                 end
             end
         end
-        
-        surface.SetDrawColor(Color(0, 0, 0, 192))
-        surface.DrawOutlinedRect(x, y, w, h)
 
         id = id + 1
     end
@@ -325,12 +377,12 @@ local function DrawBars(v, bbox)
         local x, y, w, h = bbox.x, bbox.y + bbox.h + (5 * id) + 1, bbox.w, 4
         local x, y, w, h = math.floor(x), math.floor(y), math.floor(w), math.floor(h) 
         
-        surface.SetDrawColor(Color(0, 0, 0, 96))
+        surface.SetDrawColor(Color(0, 0, 0, 128))
         surface.DrawRect(x, y, w, h)
 
         if(v.flip) then
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x + (w - (w * v.value)), y, w * v.value, h)
+            surface.DrawRect(x + (w - (w * v.value)), y + 1, w * v.value, h - 2)
 
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -349,7 +401,7 @@ local function DrawBars(v, bbox)
             end
         else
             surface.SetDrawColor(v.clr || color_white)
-            surface.DrawRect(x, y, w * v.value, h)
+            surface.DrawRect(x, y + 1, w * v.value, h - 2)
 
             if(v.format) then
                 DrawAboveBars[#DrawAboveBars + 1] = function()
@@ -367,9 +419,6 @@ local function DrawBars(v, bbox)
                 end
             end
         end
-        
-        surface.SetDrawColor(Color(0, 0, 0, 192))
-        surface.DrawOutlinedRect(x, y, w, h)
 
         id = id + 1
     end
@@ -450,7 +499,8 @@ RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
         local v = players[k]
         if(!v) then continue end
         if(!v:Alive()) then continue end
-
+        if(v:GetNoDraw()) then continue end
+        
         playerFlags[v:EntIndex()] = {
             top = {},
             left = {},
@@ -464,8 +514,7 @@ RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
             right = {},
         }
 
-        if(v == LocalPlayer()) then                     // Local
-            if(!(RoachHook.Config["misc.camera.b_thirdperson"] && RoachHook.PressedVars["misc.camera.b_thirdperson.key"])) then continue end
+        if(v == LocalPlayer()) then    // Local
             if(!RoachHook.Config["player.local_esp.b_enable"]) then continue end
             
             local bbox = RoachHook.Helpers.GetRotatedAABB(v, v:GetRenderAngles(), v:GetPos())

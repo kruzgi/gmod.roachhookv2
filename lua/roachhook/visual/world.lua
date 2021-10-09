@@ -1,5 +1,5 @@
 local floorMats = {
-    ["dev/dev_measuregeneric01b"] = true
+    ["dev/dev_measuregeneric01b"] = true,
 }
 local lastColor = Color(0, 0, 0, 0)
 local function WorldModulation()
@@ -15,7 +15,11 @@ local function WorldModulation()
                 local mat = Material(v)
                 mat:SetVector("$color", Vector(clr0.r / 255, clr0.g / 255, clr0.b / 255))
                 
-                if(floorMats[v]) then continue end
+                if(floorMats[v] || string.find(v, "ladder") || string.find(v, "floor") || string.find(v, "rails") || string.find(v, "crate")) then
+                    mat:SetFloat("$alpha", 1)
+
+                    continue
+                end
                 mat:SetFloat("$alpha", clr0.a / 255)
             end
 
@@ -38,6 +42,7 @@ local function PropModulation()
 
     if(RoachHook.Config["visuals.b_prop_modulation"]) then
         for k, v in ipairs(ents.FindByClass("prop_*")) do
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
             v:SetColor(clr)
         end
     else

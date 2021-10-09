@@ -64,27 +64,35 @@ RoachHook.Detour.hook.Add("PrePlayerDraw", "robot_taunt", function(plr)
     end
 end)
 local lastTickCount = nil
-RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
+RoachHook.Features.Misc.AnimationFix = function(plr)
     if(plr == RoachHook.Detour.LocalPlayer()) then
         if(RoachHook.DrawingFake) then return end
-        -- if(RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["ragebot.b_enable"]) then
+
+        -- if(RoachHook.IsFakeWalking) then
         --     plr:InvalidateBoneCache()
-    
-        --         plr:SetPoseParameter("aim_yaw", 0)
-        --         plr:SetPoseParameter("head_yaw", 0)
-    
-        --         plr:SetPoseParameter("aim_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-        --         plr:SetPoseParameter("head_pitch", math.Clamp(RoachHook.AntiAimData.real.x, -89, 89))
-    
-        --         local vel = plr:GetVelocity():Length2D()
-        --         local velScale = math.Clamp(vel / 60, 0, 1)
-        --         local velocity = (plr:GetVelocity():Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
-    
+
+        --         plr:SetPoseParameter("move_x", 0)
+        --         plr:SetPoseParameter("move_y", 0)
+
+        --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
+        --         --     plr:SetCycle(RoachHook.SendData.cycle)
+        --         -- end
+
+        --     plr:SetupBones()
+        -- elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
+        --     plr:InvalidateBoneCache()
+
+        --         local vel = RoachHook.iWishTicks > 6 && RoachHook.SendData.velocity || plr:GetVelocity()
+        --         local velScale = 5
+        --         local velocity = (vel:Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+
         --         plr:SetPoseParameter("move_x", velocity.x)
         --         plr:SetPoseParameter("move_y", -velocity.y)
-    
-        --         plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.real.y, 0))
-                
+
+        --         -- if(RoachHook.iWishTicks > 6) then
+        --         --     plr:SetCycle(RoachHook.SendData.cycle)
+        --         -- end
+
         --     plr:SetupBones()
         -- end
     else
@@ -137,4 +145,37 @@ RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
             
         plr:SetupBones()
     end
+end
+RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
+    RoachHook.Features.Misc.AnimationFix(plr)
+end)
+RoachHook.Detour.hook.Add("PostPlayerDraw", "FakeChamsSkeletonFix", function(plr)
+    if(plr != LocalPlayer()) then return end
+    -- if(RoachHook.IsFakeWalking) then
+    --     plr:InvalidateBoneCache()
+
+    --         plr:SetPoseParameter("move_x", 0)
+    --         plr:SetPoseParameter("move_y", 0)
+
+    --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
+    --         --     plr:SetCycle(RoachHook.SendData.cycle)
+    --         -- end
+
+    --     plr:SetupBones()
+    -- elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
+    --     plr:InvalidateBoneCache()
+
+    --         local vel = RoachHook.iWishTicks > 6 && RoachHook.SendData.velocity || plr:GetVelocity()
+    --         local velScale = 2
+    --         local velocity = (vel:Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+
+    --         plr:SetPoseParameter("move_x", velocity.x)
+    --         plr:SetPoseParameter("move_y", -velocity.y)
+
+    --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
+    --         --     plr:SetCycle(RoachHook.SendData.cycle)
+    --         -- end
+
+    --     plr:SetupBones()
+    -- end
 end)

@@ -641,7 +641,7 @@ local function Indicators()
             value = fakeDelta / 180
         }
 
-        if(LocalPlayer():GetVelocity():Length2D() < 5) then
+        if((LocalPlayer():GetVelocity():Length2D() < 5 || !LocalPlayer():IsOnGround()) || RoachHook.IsFakeWalking && (RoachHook.Config["antiaim.b_lby_break"] || RoachHook.Config["antiaim.b_lby_sway"])) then
             local lbyTimer = (CurTime() - RoachHook.aaLBYTimer) / RoachHook.LBYTime
             
             indicatorsToDraw[#indicatorsToDraw + 1] = {

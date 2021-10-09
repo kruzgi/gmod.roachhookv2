@@ -25,6 +25,17 @@ ColorPicker.subX = 0
 ColorPicker.ParentedBy = nil
 ColorPicker._type = "RoachHook.ColorPicker"
 
+ColorPicker.Circle = RoachHook.Circles.New(CIRCLE_FILLED, 300, 0, 0, 2)
+
+local function RenderCircle(x, y, radius)
+    local poly = {}
+    for i=0, 360 do
+        local pos = Vector(x, y) + Angle(0, i, 0):Forward() * radius
+        poly[#poly + 1] = {x = pos.x, y = pos.y}
+    end
+    surface.DrawPoly(poly)
+end
+
 local matGrid = Material("gui/alpha_grid.png", "nocull")
 local matHue = Material("gui/colors.png", "nocull")
 function ColorPicker:Draw()
@@ -123,22 +134,22 @@ function ColorPicker:Draw()
 
                 render.SetScissorRect(x, y, x + w, y + h, true)
             
-                render.SetStencilWriteMask(0xFF)
-                render.SetStencilTestMask(0xFF)
-                render.SetStencilReferenceValue(0)
-                render.SetStencilPassOperation(STENCIL_KEEP)
-                render.SetStencilZFailOperation(STENCIL_KEEP)
-                render.ClearStencil()
+                -- render.SetStencilWriteMask(0xFF)
+                -- render.SetStencilTestMask(0xFF)
+                -- render.SetStencilReferenceValue(0)
+                -- render.SetStencilPassOperation(STENCIL_KEEP)
+                -- render.SetStencilZFailOperation(STENCIL_KEEP)
+                -- render.ClearStencil()
 
-                render.SetStencilEnable(true)
-                render.SetStencilReferenceValue(1)
-                render.SetStencilCompareFunction(STENCIL_NEVER)
-                render.SetStencilFailOperation(STENCIL_REPLACE)
+                -- render.SetStencilEnable(true)
+                -- render.SetStencilReferenceValue(1)
+                -- render.SetStencilCompareFunction(STENCIL_NEVER)
+                -- render.SetStencilFailOperation(STENCIL_REPLACE)
 
-                RoachHook.Helpers.DrawRoundedBoxProper(4, x, y, w, h, Color(255, 255, 255))
+                -- RoachHook.Helpers.DrawRoundedBoxProper(4, x, y, w, h, Color(255, 255, 255))
 
-                render.SetStencilCompareFunction(STENCIL_EQUAL)
-                render.SetStencilFailOperation(STENCIL_KEEP)
+                -- render.SetStencilCompareFunction(STENCIL_EQUAL)
+                -- render.SetStencilFailOperation(STENCIL_KEEP)
 
                 surface.SetDrawColor(Color(255, 255, 255))
                 surface.SetMaterial(matHue)
@@ -149,7 +160,7 @@ function ColorPicker:Draw()
                 surface.SetDrawColor(Color(25, 25, 25))
                 surface.DrawOutlinedRect(x - 1, y - 2 + addY, w + 2, 4)
 
-                render.SetStencilEnable(false)
+                -- render.SetStencilEnable(false)
                 
                 render.SetScissorRect(0, 0, ScrW(), ScrH(), true)
             end
@@ -205,29 +216,34 @@ function ColorPicker:Draw()
                 surface.DrawRect(x - 2 + addX, y - 1, 4, h + 2)
                 surface.SetDrawColor(Color(25, 25, 25))
                 surface.DrawOutlinedRect(x - 2 + addX, y - 1, 4, h + 2)
+                
+                surface.SetDrawColor(0, 0, 0)
+                surface.DrawOutlinedRect(x - 1, y - 1, w + 2, h + 2)
+                surface.SetDrawColor(0, 0, 0, 128)
+                surface.DrawOutlinedRect(x - 2, y - 2, w + 4, h + 4)
             end
 
             // Main picker
             local x, y, w, h = x + (10 * RoachHook.DPIScale), y + (10 * RoachHook.DPIScale), 130 * RoachHook.DPIScale, 130 * RoachHook.DPIScale
 
-            render.SetScissorRect(x, y, x + w, y + h, true)
+            -- render.SetScissorRect(x, y, x + w, y + h, true)
         
-            render.SetStencilWriteMask(0xFF)
-            render.SetStencilTestMask(0xFF)
-            render.SetStencilReferenceValue(0)
-            render.SetStencilPassOperation(STENCIL_KEEP)
-            render.SetStencilZFailOperation(STENCIL_KEEP)
-            render.ClearStencil()
+            -- render.SetStencilWriteMask(0xFF)
+            -- render.SetStencilTestMask(0xFF)
+            -- render.SetStencilReferenceValue(0)
+            -- render.SetStencilPassOperation(STENCIL_KEEP)
+            -- render.SetStencilZFailOperation(STENCIL_KEEP)
+            -- render.ClearStencil()
 
-            render.SetStencilEnable(true)
-            render.SetStencilReferenceValue(1)
-            render.SetStencilCompareFunction(STENCIL_NEVER)
-            render.SetStencilFailOperation(STENCIL_REPLACE)
+            -- render.SetStencilEnable(true)
+            -- render.SetStencilReferenceValue(1)
+            -- render.SetStencilCompareFunction(STENCIL_NEVER)
+            -- render.SetStencilFailOperation(STENCIL_REPLACE)
 
-            RoachHook.Helpers.DrawRoundedBoxProper(5, x, y, w, h, Color(255, 255, 255))
+            -- RoachHook.Helpers.DrawRoundedBoxProper(5, x, y, w, h, Color(255, 255, 255))
 
-            render.SetStencilCompareFunction(STENCIL_EQUAL)
-            render.SetStencilFailOperation(STENCIL_KEEP)
+            -- render.SetStencilCompareFunction(STENCIL_EQUAL)
+            -- render.SetStencilFailOperation(STENCIL_KEEP)
 
             draw.RoundedBox(0, x, y, w, h, Color(255, 255, 255))
 
@@ -239,9 +255,14 @@ function ColorPicker:Draw()
             surface.SetMaterial(RoachHook.Materials.gradient.down)
             surface.DrawTexturedRect(x, y, w, h)
 
-            render.SetStencilEnable(false)
+            surface.SetDrawColor(0, 0, 0)
+            surface.DrawOutlinedRect(x - 1, y - 1, w + 2, h + 2)
+            surface.SetDrawColor(0, 0, 0, 128)
+            surface.DrawOutlinedRect(x - 2, y - 2, w + 4, h + 4)
+
+            -- render.SetStencilEnable(false)
             
-            render.SetScissorRect(0, 0, ScrW(), ScrH(), true)
+            -- render.SetScissorRect(0, 0, ScrW(), ScrH(), true)
 
             local bHovered = RoachHook.Helpers.MouseInBox(x, y, w, h)
             if(input.IsMouseDown(MOUSE_LEFT)) then
@@ -271,10 +292,38 @@ function ColorPicker:Draw()
 
             local hue, sat, val = ColorToHSV(RoachHook.Config[self.var])
 
-            local x, y = x + (w * sat), y + (h - (h * val))
+            local bx, by = x + (w * sat), y + (h - (h * val))
 
-            surface.SetDrawColor(Color(25, 25, 25))
-            surface.DrawOutlinedRect(x - 2, y - 2, 4, 4)
+            -- surface.SetDrawColor(Color(25, 25, 25))
+            -- surface.DrawOutlinedRect(math.Clamp(bx, x, x + w - 4), math.Clamp(by, y, y + h - 4), 4, 4)
+
+            draw.NoTexture()
+            
+            if(!self.CircleRadius) then self.CircleRadius = 3 end
+            self.CircleRadius = Lerp(FrameTime() * 5, self.CircleRadius, self.Internal.bIsGrabbing && 4 || 3)
+            if(!self.Internal.bIsGrabbing) then
+                if(!self.LastColor) then
+                    self.LastColor = Color(RoachHook.Config[self.var].r, RoachHook.Config[self.var].g, RoachHook.Config[self.var].b, RoachHook.Config[self.var].a)
+                end
+                self.LastColor = RoachHook.Helpers.LerpColor(FrameTime() * 5, self.LastColor, RoachHook.Config[self.var])
+            end
+
+            surface.SetDrawColor(color_black)
+            RenderCircle(bx, by, self.CircleRadius)
+            
+            render.SetScissorRect(bx - 5, by - 5, bx, by + 5, true)
+
+            surface.SetDrawColor(self.LastColor.r, self.LastColor.g, self.LastColor.b)
+            RenderCircle(bx, by, self.CircleRadius - 1)
+
+            render.SetScissorRect(0, 0, ScrW(), ScrH(), false)
+            
+            render.SetScissorRect(bx, by - 5, bx + 5, by + 5, true)
+
+            surface.SetDrawColor(RoachHook.Config[self.var].r, RoachHook.Config[self.var].g, RoachHook.Config[self.var].b)
+            RenderCircle(bx, by, self.CircleRadius - 1)
+
+            render.SetScissorRect(0, 0, ScrW(), ScrH(), false)
             
             self.frame.canDrag = false
         end

@@ -98,6 +98,32 @@ local function RenderChams()
     
                     plr:SetPoseParameter("move_x", velocity.x)
                     plr:SetPoseParameter("move_y", -velocity.y)
+                    
+                    if(RoachHook.IsFakeWalking) then
+                        plr:InvalidateBoneCache()
+
+                            plr:SetPoseParameter("move_x", 0)
+                            plr:SetPoseParameter("move_y", 0)
+
+                            if(RoachHook.SendData.cycle) then
+                                plr:SetCycle(RoachHook.SendData.cycle)
+                            end
+
+                        plr:SetupBones()
+                    elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
+                        plr:InvalidateBoneCache()
+
+                            local vel = RoachHook.SendData.velocity
+                            local velScale = math.Clamp(vel:Length2D() / 60, 0, 1)
+                            local velocity = (vel:Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+
+                            plr:SetPoseParameter("move_x", velocity.x)
+                            plr:SetPoseParameter("move_y", -velocity.y)
+
+                            plr:SetCycle(RoachHook.SendData.cycle)
+
+                        plr:SetupBones()
+                    end
     
                     plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.fake.y, 0))
                     
@@ -125,6 +151,8 @@ local function RenderChams()
                 end
                 
                 RoachHook.DrawingFake = false
+
+                RoachHook.Features.Misc.AnimationFix(plr)
             end
         end
 
@@ -150,7 +178,7 @@ local function RenderChams()
 
             if(v == me) then continue end
                 
-            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
+            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.invisible_chams"]) then
                 local clr = RoachHook.Config["player.team.chams.invisible_chams.color"]
                 local mat = RoachHook.Config["player.team.chams.invisible_chams.mat"]
 
@@ -176,7 +204,7 @@ local function RenderChams()
                         v:DrawModel()
                     end
                 end
-            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
+            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.invisible_chams"]) then
                 local clr = RoachHook.Config["player.enemy.chams.invisible_chams.color"]
                 local mat = RoachHook.Config["player.enemy.chams.invisible_chams.mat"]
 
@@ -220,7 +248,7 @@ local function RenderChams()
 
             if(v == me) then continue end
                 
-            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"]) then
+            if(v:Team() == me:Team() && RoachHook.Config["player.team.chams.enable"] && RoachHook.Config["player.team.chams.visible_chams"]) then
                 local clr = RoachHook.Config["player.team.chams.visible_chams.color"]
                 local mat = RoachHook.Config["player.team.chams.visible_chams.mat"]
 
@@ -246,7 +274,7 @@ local function RenderChams()
                         v:DrawModel()
                     end
                 end
-            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"]) then
+            elseif(v:Team() != me:Team() && RoachHook.Config["player.enemy.chams.enable"] && RoachHook.Config["player.enemy.chams.visible_chams"]) then
                 local clr = RoachHook.Config["player.enemy.chams.visible_chams.color"]
                 local mat = RoachHook.Config["player.enemy.chams.visible_chams.mat"]
 

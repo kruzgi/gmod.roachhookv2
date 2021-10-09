@@ -91,10 +91,9 @@ RoachHook.Helpers.GetRotatedAABB = function(entity, angle, pos)
     local data = {minX = math.huge, maxX = 0, minY = math.huge, maxY = 0}
 
     for k=1, #corners do
-        local rotatedCorner = corners[k]
-        if(angle) then
-            rotatedCorner:Rotate(angle)
-        end
+        local rotatedCorner = corners[k]        
+        rotatedCorner:Rotate(entity == RoachHook.Detour.LocalPlayer() && Angle(0, RoachHook.SilentAimbot.y, 0) || (angle || entity:GetRenderAngles()))
+        
         local screenCorner = (pos + rotatedCorner):ToScreen()
         if(!screenCorner.visible) then return nil end
         
@@ -115,6 +114,12 @@ RoachHook.Helpers.GetRotatedAABB = function(entity, angle, pos)
     if(bbox.x + bbox.w <= 2 || bbox.y + bbox.h <= 2) then return nil end
 
     return bbox
+end
+RoachHook.Helpers.IsSWCS = function(weapon)
+    if(!weapon || !IsValid(weapon)) then return false end
+    if(!weapon:IsScripted()) then return false end
+    if(weapons.Get(weapon:GetClass()).Base != "weapon_swcs_knife" && weapons.Get(weapon:GetClass()).Base != "weapon_swcs_base") then return false end
+    return true
 end
 RoachHook.Helpers.LerpColor = function(t, from, to)
     return Color(

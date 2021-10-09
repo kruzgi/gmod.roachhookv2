@@ -52,6 +52,7 @@ RoachHook.Features = {}
 RoachHook.Features.Misc = {}
 RoachHook.Features.Legitbot = {}
 RoachHook.Features.Ragebot = {}
+RoachHook.Features.SWCS = {}
 RoachHook.Materials = {
     gradient = {
         left    = RoachHook.Detour.Material("vgui/gradient-l"),
@@ -116,6 +117,7 @@ RoachHook.Modules.Big = {
 }
 RoachHook.SilentAimbot = RoachHook.SilentAimbot || nil
 RoachHook.ServerTime = nil
+RoachHook.SendData = {}
 
 local moduleLoadTimer = CurTime()
 hook.Add("Think", "AntiCrashModules", function()
@@ -197,6 +199,7 @@ RoachHook_IncludeFile("roachhook/misc/net_dump.lua")
 RoachHook_IncludeFile("roachhook/misc/money_aimbot.lua")
 RoachHook_IncludeFile("roachhook/misc/cvar_bypass.lua")
 RoachHook_IncludeFile("roachhook/misc/cfg_system.lua")
+RoachHook_IncludeFile("roachhook/misc/swcs_knifebot.lua")
 
 RoachHook_IncludeFile("roachhook/legitbot/aimbot.lua")
 RoachHook_IncludeFile("roachhook/ragebot/run.lua")
@@ -344,15 +347,14 @@ local yaw = {
     "Left",
     "Random",
     "Spin",
-    "180° Spin",
-    "180° Random",
+    "120° Spin",
+    "120° Random",
+    "Clock AA",
     "Custom",
 }
 local yaw_mod = {
     "None",
     "Wall detection",
-    //"Freestanding",
-    //"Wall detection + Freestanding"
 }
 local jitter = {
     "Disabled",
@@ -494,12 +496,18 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 Menu.NewSliderInt("Jitter Yaw", "antiaim.i_jitter.deg", 0, 0, 180, "%d°", function()
                     return RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["antiaim.i_jitter"] != 1
                 end),
+                Menu.NewCheckbox("LBY breaker", "antiaim.b_lby_break", false, function()
+                    return RoachHook.Config["antiaim.b_enable"]
+                end),
                 Menu.NewCheckbox("Fake Flick", "antiaim.b_fake_flick", false, function()
                     return RoachHook.Config["antiaim.b_enable"]
                 end, nil, nil, nil, true, nil, "hold"),
                 Menu.NewSliderFloat("Fake Flick Timer", "antiaim.b_fake_flick.fl_time", 1.0, 0.1, 1.5, "%0.1f seconds", 1, function()
                     return RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["antiaim.b_fake_flick"]
-                end)
+                end),
+                Menu.NewCheckbox("LBY Sway while Fake Flicking", "antiaim.b_lby_sway", false, function()
+                    return RoachHook.Config["antiaim.b_enable"] && RoachHook.Config["antiaim.b_fake_flick"]
+                end),
             }
         },
         {
@@ -525,7 +533,10 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 end, nil, nil, nil, true, 0, "hold"),
                 Menu.NewCombo("Fake Duck Mode", "fakelag.b_fakeduck.i_mode", {"Default", "Fast"}, 1, function()
                     return RoachHook.Config["fakelag.b_enable"] && RoachHook.Config["fakelag.b_fakeduck"]
-                end)
+                end),
+                Menu.NewCheckbox("Fakewalk", "fakelag.b_fakewalk", false, function()
+                    return RoachHook.Config["fakelag.b_enable"]
+                end, nil, nil, nil, true, 0, "hold"),
             }
         },
     } },
@@ -727,8 +738,11 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 Menu.NewCheckbox("Bounding Box", "player.local_esp.b_bbox", false, function()
                     return RoachHook.Config["player.local_esp.b_enable"]
                 end, true, true, Color(255, 255, 255)),
-                Menu.NewCheckbox("Bounding Box Outline", "player.local_esp.b_bbox.outline", false, function()
+                Menu.NewCombo("Bounding Box Type", "player.local_esp.b_bbox.type", {"Default", "Corners", "3D"}, 1, function()
                     return RoachHook.Config["player.local_esp.b_enable"] && RoachHook.Config["player.local_esp.b_bbox"]
+                end),
+                Menu.NewCheckbox("Bounding Box Outline", "player.local_esp.b_bbox.outline", false, function()
+                    return RoachHook.Config["player.local_esp.b_enable"] && RoachHook.Config["player.local_esp.b_bbox"] && RoachHook.Config["player.local_esp.b_bbox.type"] != 3
                 end, true, true, Color(0, 0, 0)),
                 Menu.NewCheckbox("Name", "player.local_esp.b_name", false, function()
                     return RoachHook.Config["player.local_esp.b_enable"]
@@ -805,8 +819,11 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 Menu.NewCheckbox("Bounding Box", "player.team_esp.b_bbox", false, function()
                     return RoachHook.Config["player.team_esp.b_enable"]
                 end, true, true, Color(255, 255, 255)),
-                Menu.NewCheckbox("Bounding Box Outline", "player.team_esp.b_bbox.outline", false, function()
+                Menu.NewCombo("Bounding Box Type", "player.team_esp.b_bbox.type", {"Default", "Corners", "3D"}, 1, function()
                     return RoachHook.Config["player.team_esp.b_enable"] && RoachHook.Config["player.team_esp.b_bbox"]
+                end),
+                Menu.NewCheckbox("Bounding Box Outline", "player.team_esp.b_bbox.outline", false, function()
+                    return RoachHook.Config["player.team_esp.b_enable"] && RoachHook.Config["player.team_esp.b_bbox"] && RoachHook.Config["player.team_esp.b_bbox.type"] != 3
                 end, true, true, Color(0, 0, 0)),
                 Menu.NewCheckbox("Name", "player.team_esp.b_name", false, function()
                     return RoachHook.Config["player.team_esp.b_enable"]
@@ -886,8 +903,11 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 Menu.NewCheckbox("Bounding Box", "player.enemy_esp.b_bbox", false, function()
                     return RoachHook.Config["player.enemy_esp.b_enable"]
                 end, true, true, Color(255, 255, 255)),
-                Menu.NewCheckbox("Bounding Box Outline", "player.enemy_esp.b_bbox.outline", false, function()
+                Menu.NewCombo("Bounding Box Type", "player.enemy_esp.b_bbox.type", {"Default", "Corners", "3D"}, 1, function()
                     return RoachHook.Config["player.enemy_esp.b_enable"] && RoachHook.Config["player.enemy_esp.b_bbox"]
+                end),
+                Menu.NewCheckbox("Bounding Box Outline", "player.enemy_esp.b_bbox.outline", false, function()
+                    return RoachHook.Config["player.enemy_esp.b_enable"] && RoachHook.Config["player.enemy_esp.b_bbox"] && RoachHook.Config["player.enemy_esp.b_bbox.type"] != 3
                 end, true, true, Color(0, 0, 0)),
                 Menu.NewCheckbox("Name", "player.enemy_esp.b_name", false, function()
                     return RoachHook.Config["player.enemy_esp.b_enable"]
@@ -1057,6 +1077,26 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 }, 1, function()
                     return RoachHook.Config["misc.i_selected_player"] != nil && #GetPlayerNames() > 0 && RoachHook.Config["misc.b_resolve." .. RoachHook.Config["misc.i_selected_player"]]
                 end),
+            },
+        },
+        {
+            name = "SWCS",
+            items = {
+                Menu.NewCheckbox("Knife Bot", "swcs.b_knife_bot", false),
+                Menu.NewCombo("Knife Bot Mode", "swcs.b_knife_bot.i_mode", {
+                    "Default",
+                    "Backstab",
+                }, 1, function()
+                    return RoachHook.Config["swcs.b_knife_bot"]
+                end),
+                Menu.NewMultiCombo("Knife Bot Target", "swcs.b_knife_bot.target", {
+                    "Team", "Enemy", "NPC",
+                }, {}, function()
+                    return RoachHook.Config["swcs.b_knife_bot"]
+                end),
+                Menu.NewCheckbox("No Recoil (Aimbot)", "swcs.b_no_recoil", false),
+                Menu.NewSliderInt("Hitchance (Aimbot)", "swcs.i_hc", 0, 0, 100, "%d%%"),
+                Menu.NewCheckbox("Autowall (Aimbot, WIP)", "swcs.b_aw", false),
             },
         },
         {
@@ -1341,6 +1381,8 @@ RoachHook.Detour.hook.Add("Think", "UpdatePressedKeys", function()
     end
 end)
 
+local positionData = {}
+
 RoachHook.AntiAim_WasLBY = false
 local cl_interp, cl_updaterate, cl_interp_ratio = GetConVar("cl_interp"), GetConVar("cl_updaterate"), GetConVar("cl_interp_ratio")
 RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
@@ -1380,25 +1422,27 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
         RunConsoleCommand("cl_interp_ratio", 1)
     end
 
+    RoachHook.Features.Misc.Autostrafer(cmd)
     RoachHook.Features.Misc.Bunnyhop(cmd)
     //RoachHook.Features.Misc.FreeCam(cmd)
     
     if(RoachHook.Config["ragebot.b_engine_pred"]) then
         RoachHook.Modules.Big.StartPrediction(cmd)
     end
-    
-    RoachHook.Features.Legitbot.Aimbot(cmd)
 
+    RoachHook.Features.Ragebot.FakeDuck(cmd)
+    RoachHook.Features.Ragebot.Fakewalk(cmd)
     RoachHook.Features.Ragebot.Fakelag(cmd)
     RoachHook.Features.Ragebot.AntiAim(cmd)
 
+    RoachHook.Features.Legitbot.Aimbot(cmd)
     RoachHook.Features.Ragebot.Aimbot(cmd)
-    RoachHook.Features.Ragebot.FakeDuck(cmd)
     RoachHook.Features.Misc.MoneyAimbot(cmd)
+    RoachHook.Features.SWCS.KnifeBot(cmd)
     
     RoachHook.AntiAimData.current = cmd:GetViewAngles()
 
-    if(cmd:KeyDown(IN_ATTACK) && !(RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"])) then
+    if(cmd:KeyDown(IN_ATTACK) && !(RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) && !RoachHook.IsFakeWalking) then
         bSendPacket = true
     end
     
@@ -1432,7 +1476,6 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
         RoachHook.Modules.Big.FinishPrediction(cmd)
     end
 
-    RoachHook.Features.Misc.Autostrafer(cmd)
     local RawAngles = cmd:GetViewAngles()
 
     cmd:SetViewAngles(Angle(
@@ -1443,6 +1486,18 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
 
     RoachHook.Helpers.FixMovement(cmd)
     RoachHook.Features.Misc.CircleStrafer(cmd)
+
+    if(bSendPacket) then
+        positionData[#positionData + 1] = {pos = LocalPlayer():GetPos(), mins = LocalPlayer():OBBMins(), maxs = LocalPlayer():OBBMaxs(), angle = LocalPlayer():GetRenderAngles(), velocity = LocalPlayer():GetVelocity()}
+        if(#positionData > 8) then
+            table.remove(positionData, 1)
+        end
+
+        RoachHook.SendData = {
+            velocity = LocalPlayer():GetVelocity(),
+            cycle = RoachHook.ServerTime % 1,
+        }
+    end
 end)
 
 local function Drawing()

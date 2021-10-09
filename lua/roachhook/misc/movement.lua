@@ -29,8 +29,9 @@ RoachHook.Features.Misc.Bunnyhop = function(cmd)
     cmd:RemoveKey(IN_JUMP)
 end
 local function AutostraferLegit(cmd)
-    if(!input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+jump", true)))) then return end
-
+    if(RoachHook.ActiveItem && RoachHook.ActiveItem._type == "RoachHook.Textbox") then return end
+    if(!cmd:KeyDown(IN_JUMP)) then return end
+    
     cmd:SetForwardMove(0)
 
     if(cmd:GetMouseX() > 0) then
@@ -43,7 +44,8 @@ local function AutostraferLegit(cmd)
 end
 local old_yaw = 0.0
 local function AutostraferDirectional(cmd)
-    if(!input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+jump", true)))) then return end
+    if(RoachHook.ActiveItem && RoachHook.ActiveItem._type == "RoachHook.Textbox") then return end
+    if(!cmd:KeyDown(IN_JUMP)) then return end
 
         local get_velocity_degree = function(velocity)
             local tmp = math.deg(math.atan(30.0 / velocity))
@@ -146,7 +148,8 @@ local function AutostraferDirectional(cmd)
         cmd:SetSideMove(math.sin(yaw) * speed)
 end
 local function AutostraferRage(cmd)
-    if(!input.IsKeyDown(input.GetKeyCode(input.LookupBinding("+jump", true)))) then return end
+    if(RoachHook.ActiveItem && RoachHook.ActiveItem._type == "RoachHook.Textbox") then return end
+    if(!cmd:KeyDown(IN_JUMP)) then return end
 
     cmd:SetForwardMove(0)
 
