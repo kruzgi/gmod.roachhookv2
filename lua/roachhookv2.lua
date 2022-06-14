@@ -12,8 +12,7 @@ function RoachHook_IncludeFile(fil)
         print("ERROR: file: " .. fil .. " not found!")
         return
     end
-    local func = CompileString(content, nil, false)()
-    return func
+    return CompileString(content, nil, false)()
 end
 
 bSendPacket = true
@@ -1427,7 +1426,7 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     //RoachHook.Features.Misc.FreeCam(cmd)
     
     if(RoachHook.Config["ragebot.b_engine_pred"]) then
-        RoachHook.Modules.Big.StartPrediction(cmd)
+        -- RoachHook.Modules.Big.StartPrediction(cmd)
     end
 
     RoachHook.Features.Ragebot.FakeDuck(cmd)
@@ -1442,9 +1441,9 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     
     RoachHook.AntiAimData.current = cmd:GetViewAngles()
 
-    if(cmd:KeyDown(IN_ATTACK) && !(RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) && !RoachHook.IsFakeWalking) then
-        bSendPacket = true
-    end
+    // if(cmd:KeyDown(IN_ATTACK) && !(RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) && !RoachHook.IsFakeWalking) then
+    //     bSendPacket = true
+    // end
     
     if(!RoachHook.Config["fakelag.b_enable"]) then
         RoachHook.AntiAimData.real = cmd:GetViewAngles()
@@ -1473,7 +1472,7 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
     end
 
     if(RoachHook.Config["ragebot.b_engine_pred"]) then
-        RoachHook.Modules.Big.FinishPrediction(cmd)
+        -- RoachHook.Modules.Big.FinishPrediction(cmd)
     end
 
     local RawAngles = cmd:GetViewAngles()

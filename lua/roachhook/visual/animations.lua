@@ -113,7 +113,7 @@ RoachHook.Features.Misc.AnimationFix = function(plr)
             90,
             180,
             0,
-            RoachHook.Modules.Big.RandomInt(-180, 180),
+            math.random(-180, 180),
         }
 
         local iPitch = RoachHook.Config["misc.b_resolve.i_pitch." .. RoachHook.Helpers.GetPlayerListID(plr)]

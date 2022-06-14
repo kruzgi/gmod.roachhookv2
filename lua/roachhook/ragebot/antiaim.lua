@@ -391,6 +391,12 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
     end
     local mod_add = yaw[iYawReal] - yaw[iYawFake]
 
+    local velocity = LocalPlayer():GetVelocity()
+    if(velocity:Length2D() <= 1.0) then
+        cmd:SetSideMove(side and -15 or 15)
+        side = !side
+    end
+
     local bFakeFlick = RoachHook.Config["antiaim.b_fake_flick"] && RoachHook.PressedVars["antiaim.b_fake_flick.key"]
     if(bFakeFlick) then
         if(bSendPacket) then

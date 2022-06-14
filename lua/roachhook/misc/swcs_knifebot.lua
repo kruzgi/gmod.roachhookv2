@@ -269,13 +269,13 @@ RoachHook.Features.SWCS.KnifeBot = function(cmd)
                 local key = nil
 
                 if(canHit2 && canBackstab2 && stabType == "right" && fDamage2 >= hp) then
-                    print("right")
+                    -- print("right")
                     key = IN_ATTACK2
                 elseif(canHit && canBackstab && stabType == "left" && fDamage >= hp) then
-                    print("left")
+                    -- print("left")
                     key = IN_ATTACK
                 end
-                print(key)
+                -- print(key)
 
                 if(key) then
                     cmd:SetViewAngles(angle)

@@ -133,7 +133,7 @@ local function SWCSAutowall(p0, p1, plr)
     if(!RoachHook.Config["swcs.b_aw"]) then return true end
     local weapon = LocalPlayer():GetActiveWeapon()
 
-    // todo
+    // maybe one day lmao
     return false
 end
 function Ragebot:CanHit(plr)
@@ -169,7 +169,7 @@ function Ragebot:CanHit(plr)
     end
     
     local hitboxes = Ragebot:GetMultipointHitboxes()
-    local multipointScale = RoachHook.Config["ragebot.i_multipoint_scale"] / 100
+    local multipointScale = math.Clamp(RoachHook.Config["ragebot.i_multipoint_scale"] / 100, 0.1, 1.0)
     local multipointScans = RoachHook.Config["ragebot.i_multipoint_scans"]
 
     local multipointScaleStep = multipointScale / multipointScans
@@ -190,28 +190,65 @@ function Ragebot:CanHit(plr)
         local hMins, hMaxs = plr:GetHitBoxBounds(hitbox, 0)
         if(!hMins || !hMaxs) then continue end
 
-        local corners = RoachHook.Helpers.GetCorners(hMins, hMaxs)
-        for c=1,#corners do
-            for i=1, multipointScans do
-                local corner = corners[c] * (multipointScaleStep * i)
-                corner:Rotate(angle)
-    
-                local multipoint_pos = pos + corner
-                
-                local trc = util.TraceLine({
-                    start = eye,
-                    endpos = multipoint_pos,
-                    filter = me,
-                    mask = MASK_SHOT,
-                })
-    
-                if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then return multipoint_pos end
+        local lowestLen = 128
+        local bestPos = nil
+        for x=hMins.x * multipointScale, hMaxs.x * multipointScale, ((hMaxs.x - hMins.x) / multipointScans) do
+            for y=hMins.y * multipointScale, hMaxs.y * multipointScale, ((hMaxs.y - hMins.y) / multipointScans) do
+                for z=hMins.z * multipointScale, hMaxs.z * multipointScale, ((hMaxs.z - hMins.z) / multipointScans) do
+                    local pointPos = Vector(x, y, z)
+                    pointPos:Rotate(angle)
+                    local pointLen = pointPos:Length()
+                    if(pointLen >= lowestLen) then
+                        continue
+                    end
+                    
+                    local multipoint_pos = pos + pointPos                    
+                    local trc = util.TraceLine({
+                        start = eye,
+                        endpos = multipoint_pos,
+                        filter = me,
+                        mask = MASK_SHOT,
+                    })
+        
+                    if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then
+                        lowestLen = pointLen
+                        bestPos = multipoint_pos
+                        continue
+                    end
 
-                if(bAutowall) then
-                    if(SimpleAutowall(eye, multipoint_pos, plr)) then return multipoint_pos end
+                    if(bAutowall) then
+                        if(SimpleAutowall(eye, multipoint_pos, plr)) then
+                            lowestLen = pointLen
+                            bestPos = multipoint_pos
+                        end
+                    end
                 end
             end
         end
+        return bestPos
+
+        -- local corners = RoachHook.Helpers.GetCorners(hMins, hMaxs)
+        -- for c=1,#corners do
+        --     for i=1, multipointScans do
+        --         local corner = corners[c] * (multipointScaleStep * i)
+        --         corner:Rotate(angle)
+    
+        --         local multipoint_pos = pos + corner
+                
+        --         local trc = util.TraceLine({
+        --             start = eye,
+        --             endpos = multipoint_pos,
+        --             filter = me,
+        --             mask = MASK_SHOT,
+        --         })
+    
+        --         if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then return multipoint_pos end
+
+        --         if(bAutowall) then
+        --             if(SimpleAutowall(eye, multipoint_pos, plr)) then return multipoint_pos end
+        --         end
+        --     end
+        -- end
     end
 
     return false
@@ -364,7 +401,7 @@ local function GetPredictedVector(plr)
 end
 local weapon_recoil_view_punch_extra = GetConVar("weapon_recoil_view_punch_extra")
 local function SWCSGetRecoil(self)
-    return self:GetAimPunchAngle()
+    return self:GetAimPunchAngle() // lol
     -- local owner = self:GetPlayerOwner()
     -- if not owner then return end
     -- local iMode = self:GetWeaponMode()
@@ -478,6 +515,7 @@ RoachHook.Features.Ragebot.Aimbot = function(cmd)
         
         cmd:SetViewAngles(angle)
         cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+        -- debugoverlay.Cross(pos, 8, 3.0, color_white, true)
         if(!RoachHook.Config["ragebot.b_silent"]) then
             RoachHook.SilentAimbot = angle
         end
