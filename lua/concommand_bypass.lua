@@ -1,4 +1,3 @@
-// this has to be ran before autorun
 o_GetConVar = o_GetConVar || GetConVar
 o_GetConVar_Internal = o_GetConVar_Internal || GetConVar_Internal
 local CVar = FindMetaTable("ConVar")

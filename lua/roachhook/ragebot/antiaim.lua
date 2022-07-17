@@ -1,14 +1,20 @@
 local bForceFakelag = false
 local bIgnoreDefaultFakelag = false
-RoachHook.Features.Ragebot.Fakelag = function()
+RoachHook.Features.Ragebot.Fakelag = function(cmd)
     if(RoachHook.Config["fakelag.b_enable"]) then
         if(bIgnoreDefaultFakelag) then return end
         local iWishTicks = RoachHook.Config["fakelag.i_mode.ticks"]
         local velocity = LocalPlayer():GetVelocity():Length()
-        if(velocity < 5 && !RoachHook.Config["fakelag.b_always"] && !bForceFakelag) then iWishTicks = 1 end
-
         local movetype = LocalPlayer():GetMoveType()
-        if(movetype == MOVETYPE_LADDER || movetype == MOVETYPE_NOCLIP || movetype == MOVETYPE_OBSERVER) then iWishTicks = 1 end
+        if(movetype == MOVETYPE_LADDER && (cmd:GetForwardMove() != 0 || cmd:GetSideMove() != 0)) then
+            iWishTicks = 1
+        end
+        if(movetype == MOVETYPE_NOCLIP || movetype == MOVETYPE_OBSERVER) then
+            iWishTicks = 1
+        end
+        if(velocity < 5 && !RoachHook.Config["fakelag.b_always"] && !bForceFakelag) then
+            iWishTicks = 1
+        end
 
         if(RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) then
             bSendPacket = RoachHook.Modules.Big.GetChokedPackets() >= 14
@@ -64,7 +70,7 @@ RoachHook.Features.Ragebot.FakeDuck = function(cmd)
             cmd:RemoveKey(IN_DUCK)
         end
     elseif(iMode == 2) then
-        if(!bSendPacket) then
+        if(bSendPacket) then
             cmd:RemoveKey(IN_DUCK)
         else
             cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
@@ -203,7 +209,7 @@ local function WallDetection()
             start = eye,
             endpos = eye + ang:Forward() * 24,
             mask = MASK_SHOT,
-            filter = player.GetAll(),
+            collisiongroup = COLLISION_GROUP_DEBRIS,
         })
 
         if(trc.Fraction < lowestFraction) then
@@ -285,7 +291,7 @@ local bWasPreFlick = false
 RoachHook.LBYTime = 1.1
 local function IsRevolver()
     local weapon = LocalPlayer():GetActiveWeapon()
-    if(!weapon) then
+    if(!weapon || !weapon:IsScripted()) then
         return false
     end
 
@@ -306,12 +312,8 @@ end
 RoachHook.Features.Ragebot.AntiAim = function(cmd)
     if(!RoachHook.Config["antiaim.b_enable"]) then return end
 
-    local badmovetypes = {
-        [MOVETYPE_NOCLIP] = true,
-        [MOVETYPE_LADDER] = true,
-        [MOVETYPE_OBSERVER] = true,
-    }
-    if(badmovetypes[LocalPlayer():GetMoveType()]) then return end
+    local moveType = LocalPlayer():GetMoveType()
+    if((moveType == MOVETYPE_LADDER && (cmd:GetForwardMove() != 0 || cmd:GetSideMove() != 0)) || moveType == MOVETYPE_NOCLIP || moveType == MOVETYPE_OBSERVER) then return end
     if(!LocalPlayer():Alive()) then
         cmd:SetViewAngles(RoachHook.SilentAimbot)
         return
@@ -392,8 +394,8 @@ RoachHook.Features.Ragebot.AntiAim = function(cmd)
     local mod_add = yaw[iYawReal] - yaw[iYawFake]
 
     local velocity = LocalPlayer():GetVelocity()
-    if(velocity:Length2D() <= 1.0) then
-        cmd:SetSideMove(side and -15 or 15)
+    if(!(bit.band(cmd:GetButtons(), IN_MOVELEFT) != 0 || bit.band(cmd:GetButtons(), IN_MOVERIGHT) != 0 || bit.band(cmd:GetButtons(), IN_FORWARD) != 0 || bit.band(cmd:GetButtons(), IN_BACK) != 0)) then
+        cmd:SetSideMove(side and -15.0 or 15.0)
         side = !side
     end
 

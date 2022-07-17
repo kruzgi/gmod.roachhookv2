@@ -117,6 +117,7 @@ RoachHook.Modules.Big = {
 RoachHook.SilentAimbot = RoachHook.SilentAimbot || nil
 RoachHook.ServerTime = nil
 RoachHook.SendData = {}
+RoachHook.ShotMatrixes = {}
 
 local moduleLoadTimer = CurTime()
 hook.Add("Think", "AntiCrashModules", function()
@@ -199,6 +200,7 @@ RoachHook_IncludeFile("roachhook/misc/money_aimbot.lua")
 RoachHook_IncludeFile("roachhook/misc/cvar_bypass.lua")
 RoachHook_IncludeFile("roachhook/misc/cfg_system.lua")
 RoachHook_IncludeFile("roachhook/misc/swcs_knifebot.lua")
+RoachHook_IncludeFile("roachhook/misc/model_changer.lua")
 
 RoachHook_IncludeFile("roachhook/legitbot/aimbot.lua")
 RoachHook_IncludeFile("roachhook/ragebot/run.lua")
@@ -401,13 +403,25 @@ local scripts = {}
 local cfgbw = (420 / 5) - 4
 local cfgsx = function(i) return 5 * i end
 local configData = {}
+RoachHook.ModelIdsFromName = {["null"] = 1}
+RoachHook.ModelIdsFromPath = {["null"] = 1}
+RoachHook.ModelList = {"none"}
+RoachHook.ModelPaths = {"null"}
+local files, directories = file.Find("models/player/*.mdl", "GAME")
+for idx, fileName in ipairs(files) do
+    local mdlPath = "models/player/" .. (directories[idx] or "") .. fileName
+    RoachHook.ModelList[idx + 1] = mdlPath
+    RoachHook.ModelPaths[idx + 1] = mdlPath
+    RoachHook.ModelIdsFromName[mdlPath] = idx + 1
+    RoachHook.ModelIdsFromPath[mdlPath] = idx + 1
+end
 // Setup menu
 local cvar_gamemode = GetConVar("gamemode")
 RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 470, {
     {"Ragebot",     RoachHook.Detour.Material("ragebot.png"), {
         {
             name = "Rage Aimbot",
-            customH = 480,
+            customH = 530,
             items = {
                 Menu.NewCheckbox("Enable Ragebot", "ragebot.b_enable", false),
                 Menu.NewCheckbox("Engine Prediction", "ragebot.b_engine_pred", true, function()
@@ -445,7 +459,16 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 end),
                 Menu.NewSliderInt("Autowall Strength", "ragebot.b_autowall.i_strength", 100, 25, 300, "%d%%", function()
                     return RoachHook.Config["ragebot.b_autowall"]
-                end)
+                end),
+                Menu.NewCheckbox("Shot Matrix", "ragebot.b_shot_matrix", false, function()
+                    return RoachHook.Config["ragebot.b_enable"]
+                end, true, true, Color(255, 255, 255)),
+                Menu.NewSliderFloat("Matrix time", "ragebot.b_shot_matrix.fl_time", 3.0, 0.5, 5.0, "%.1fs", 1, function()
+                    return RoachHook.Config["ragebot.b_enable"] and RoachHook.Config["ragebot.b_shot_matrix"]
+                end),
+                Menu.NewSliderFloat("Matrix fadeoff time", "ragebot.b_shot_matrix.fl_fade_off_time", 0.3, 0.1, 1.0, "%.1fs", 1, function()
+                    return RoachHook.Config["ragebot.b_enable"] and RoachHook.Config["ragebot.b_shot_matrix"]
+                end),
             }
         },
         {
@@ -1046,6 +1069,15 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                 }, 1, function()
                     return RoachHook.Config["misc.b_taunt"]
                 end),
+                // broken lol
+                // Menu.NewCheckbox("Model Changer (Clientsided)", "misc.b_model_changer", false),
+                // Menu.NewCombo("Model", "misc.b_model_changer.i_selected", RoachHook.ModelList, 1, function()
+                //     return RoachHook.Config["misc.b_model_changer"]
+                // end),
+                // Menu.NewTextbox("Model path", "misc.b_model_changer.sz_name", "null", nil, 128, "qwertyuiopasdfghjklzxcvbnm.1234567890/"),
+                // Menu.NewButton("well the model list is bugged out and goes out of bounds lmao"),
+                // Menu.NewButton("well im not going to bother fixing it do it urself if you want to"),
+                // Menu.NewButton("you can also use the textbox above lol"),
             }
         },
         {
@@ -1072,7 +1104,13 @@ RoachHook.frame = Menu.NewFrame("roachhook v" .. RoachHook.CheatVerShort, 650, 4
                     "Left",
                     "Backwards",
                     "Forward",
-                    "Auto",
+                    "WallDetection",
+                    "Reverse WallDetection",
+                    "AtTargets Backwards",
+                    "AtTargets Forwards",
+                    "AtTargets Sideways",
+                    "Random Yaw",
+                    "Random Mode",
                 }, 1, function()
                     return RoachHook.Config["misc.i_selected_player"] != nil && #GetPlayerNames() > 0 && RoachHook.Config["misc.b_resolve." .. RoachHook.Config["misc.i_selected_player"]]
                 end),
@@ -1471,6 +1509,14 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
         end
     end
 
+    // for idx, plr in ipairs(player.GetAll()) do
+    //     if(!plr || !plr:Alive() || plr:IsDormant() || plr == LocalPlayer()) then continue end
+    //     if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then continue end
+    //     if(RoachHook.Config["misc.b_ignore." .. RoachHook.Helpers.GetPlayerListID(plr)]) then continue end
+    //     if(!RoachHook.Config["misc.b_resolve." .. RoachHook.Helpers.GetPlayerListID(plr)]) then continue end
+    //     RoachHook.Features.Ragebot.AnimFix(plr)
+    // end
+
     if(RoachHook.Config["ragebot.b_engine_pred"]) then
         -- RoachHook.Modules.Big.FinishPrediction(cmd)
     end
@@ -1500,6 +1546,27 @@ RoachHook.Detour.hook.Add("CreateMove", "SilentAimbot", function(cmd)
 end)
 
 local function Drawing()
+    cam.Start3D()
+
+        for k, v in ipairs(RoachHook.ShotMatrixes) do
+            RoachHook.ShotMatrixes[k].timeLeft = RoachHook.ShotMatrixes[k].timeLeft - FrameTime()
+
+            local clr = v.color
+            clr.a = math.Clamp(math.Remap(v.timeLeft, 0.0, RoachHook.Config["ragebot.b_shot_matrix.fl_fade_off_time"], 0.0, 1.0), 0.0, 1.0) * v.color.a
+
+            for id, hitboxData in ipairs(v.hitbox) do
+                render.DrawWireframeBox(hitboxData.pos, hitboxData.angle, hitboxData.mins, hitboxData.maxs, clr, false)
+            end
+
+            render.DrawLine(v.start, v.hit, clr, false)
+
+            if(RoachHook.ShotMatrixes[k].timeLeft <= 0.0) then
+                table.remove(RoachHook.ShotMatrixes, k)
+            end
+        end
+
+    cam.End3D()
+
     for k=1,#RoachHook.OverlayHook do RoachHook.OverlayHook[k]() end
 
     if(RoachHook.bMenuVisibleLast != RoachHook.bMenuVisible) then

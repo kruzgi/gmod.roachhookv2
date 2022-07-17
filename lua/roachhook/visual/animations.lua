@@ -28,7 +28,7 @@ local taunts = {
 local bStartedTaunt = false
 local bWasInNoclip = false
 local iLastTaunt = nil
-RoachHook.Detour.hook.Add("PrePlayerDraw", "robot_taunt", function(plr)
+local function Taunter(plr)
     if(plr != LocalPlayer()) then return end
 
     local iTaunt = RoachHook.Config["misc.b_taunt.i_selected"]
@@ -62,120 +62,178 @@ RoachHook.Detour.hook.Add("PrePlayerDraw", "robot_taunt", function(plr)
 
         bStartedTaunt = false
     end
-end)
-local lastTickCount = nil
-RoachHook.Features.Misc.AnimationFix = function(plr)
-    if(plr == RoachHook.Detour.LocalPlayer()) then
-        if(RoachHook.DrawingFake) then return end
-
-        -- if(RoachHook.IsFakeWalking) then
-        --     plr:InvalidateBoneCache()
-
-        --         plr:SetPoseParameter("move_x", 0)
-        --         plr:SetPoseParameter("move_y", 0)
-
-        --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
-        --         --     plr:SetCycle(RoachHook.SendData.cycle)
-        --         -- end
-
-        --     plr:SetupBones()
-        -- elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
-        --     plr:InvalidateBoneCache()
-
-        --         local vel = RoachHook.iWishTicks > 6 && RoachHook.SendData.velocity || plr:GetVelocity()
-        --         local velScale = 5
-        --         local velocity = (vel:Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
-
-        --         plr:SetPoseParameter("move_x", velocity.x)
-        --         plr:SetPoseParameter("move_y", -velocity.y)
-
-        --         -- if(RoachHook.iWishTicks > 6) then
-        --         --     plr:SetCycle(RoachHook.SendData.cycle)
-        --         -- end
-
-        --     plr:SetupBones()
-        -- end
-    else
-        if(!plr || !plr:Alive() || plr:IsDormant()) then return end
-        if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then return end
-        if(RoachHook.Config["misc.b_ignore." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
-        if(!RoachHook.Config["misc.b_resolve." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
-        
-        local resolver_pitches = {
-            nil,
-            -89,
-            0,
-            89,
-        }
-        local resolver_yaws = {
-            nil,
-            -90,
-            90,
-            180,
-            0,
-            math.random(-180, 180),
-        }
-
-        local iPitch = RoachHook.Config["misc.b_resolve.i_pitch." .. RoachHook.Helpers.GetPlayerListID(plr)]
-        local iYaw = RoachHook.Config["misc.b_resolve.i_yaw." .. RoachHook.Helpers.GetPlayerListID(plr)]
-
-        local plrNewPitch = iPitch > 1 && resolver_pitches[iPitch] || plr:EyeAngles().x
-        local plrNewYaw = plr:EyeAngles().y + (iYaw > 1 && resolver_yaws[iYaw] || 0)
-
-        plr:InvalidateBoneCache()
-
-            if(iPitch > 1) then
-                plr:SetPoseParameter("aim_pitch", plrNewPitch)
-                plr:SetPoseParameter("head_pitch", plrNewPitch)
-            end
-
-            if(iYaw > 1) then
-                plr:SetPoseParameter("aim_yaw", 0)
-                plr:SetPoseParameter("head_yaw", 0)
-                
-                local vel = plr:GetVelocity():Length2D()
-                local velScale = math.Clamp(vel / 60, 0, 1)
-                local velocity = (plr:GetVelocity():Angle() - Angle(0, plrNewYaw, 0)):Forward() * velScale
-    
-                plr:SetPoseParameter("move_x", velocity.x)
-                plr:SetPoseParameter("move_y", -velocity.y)
-    
-                plr:SetRenderAngles(Angle(0, plrNewYaw, 0))
-            end
-            
-        plr:SetupBones()
-    end
 end
-RoachHook.Detour.hook.Add("PrePlayerDraw", "AnimationFix", function(plr)
-    RoachHook.Features.Misc.AnimationFix(plr)
-end)
-RoachHook.Detour.hook.Add("PostPlayerDraw", "FakeChamsSkeletonFix", function(plr)
-    if(plr != LocalPlayer()) then return end
-    -- if(RoachHook.IsFakeWalking) then
-    --     plr:InvalidateBoneCache()
+local lastTickCount = nil
 
-    --         plr:SetPoseParameter("move_x", 0)
-    --         plr:SetPoseParameter("move_y", 0)
+local function WallDetectionPlayer(plr)
+    local eye = plr:GetShootPos()
+    local head = plr:GetBonePosition(plr:LookupBone("ValveBiped.Bip01_Head1"))
+    eye.z = head.z
 
-    --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
-    --         --     plr:SetCycle(RoachHook.SendData.cycle)
-    --         -- end
+    local lowestFraction = 1
+    local lowestFractionAngle = nil
+    for i=0, 360, 360 / 8 do
+        local ang = Angle(0, i, 0)
+        local trc = util.TraceLine({
+            start = eye,
+            endpos = eye + ang:Forward() * 24,
+            mask = MASK_SHOT,
+            collisiongroup = COLLISION_GROUP_DEBRIS,
+        })
 
-    --     plr:SetupBones()
-    -- elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
-    --     plr:InvalidateBoneCache()
+        if(trc.Fraction < lowestFraction) then
+            lowestFraction = trc.Fraction
+            lowestFractionAngle = ang.y
+        end
+    end
 
-    --         local vel = RoachHook.iWishTicks > 6 && RoachHook.SendData.velocity || plr:GetVelocity()
-    --         local velScale = 2
-    --         local velocity = (vel:Angle() - Angle(0, RoachHook.AntiAimData.real.y, 0)):Forward() * velScale
+    return lowestFractionAngle
+end
 
-    --         plr:SetPoseParameter("move_x", velocity.x)
-    --         plr:SetPoseParameter("move_y", -velocity.y)
+RoachHook.Features.Ragebot.BoneData = {}
+local function RotatePlayer(plr, p, y)
+    local origin = plr:GetNetworkOrigin()
+    local rotationAngle = Angle(0, y - plr:EyeAngles().y, 0)
 
-    --         -- if(RoachHook.SendData.cycle && RoachHook.iWishTicks > 6) then
-    --         --     plr:SetCycle(RoachHook.SendData.cycle)
-    --         -- end
+    // pointless, doesn't even change the hitboxes lol
+    // plr:SetPoseParameter("aim_yaw", 0.0)
+    // plr:SetPoseParameter("head_yaw", 0.0)
+    // plr:InvalidateBoneCache()
+    // plr:SetupBones()
+    
+    local numHitBoxSets = plr:GetHitboxSetCount()
+    for hboxset=0, numHitBoxSets - 1 do
+        local numHitBoxes = plr:GetHitBoxCount(hboxset)
+            
+        for hitbox=0, numHitBoxes - 1 do
+            local bone = plr:GetHitBoxBone(hitbox, hboxset)
+        
+            local pos, angle = plr:GetBonePosition(bone)
 
-    --     plr:SetupBones()
-    -- end
-end)
+            angle.y = angle.y + rotationAngle.y
+
+            local offset = pos - origin
+            offset:Rotate(rotationAngle)
+
+            pos = origin + offset
+
+            local mins, maxs = plr:GetHitBoxBounds(hitbox, hboxset)
+
+            RoachHook.Features.Ragebot.BoneData[plr:EntIndex()][bone] = {
+                pos = pos,
+                angle = angle,
+                mins = mins,
+                maxs = maxs
+            }
+        end
+    end
+
+    -- PrintTable(RoachHook.Features.Ragebot.BoneData)
+end
+
+function RoachHook.Features.Ragebot.AnimFix(plr, velocity, maxSeqGroundSpeed)
+    if(RoachHook.Config["ragebot.b_team_check"] && plr:Team() == RoachHook.Detour.LocalPlayer()) then return end
+    if(RoachHook.Config["misc.b_ignore." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
+    if(!RoachHook.Config["misc.b_resolve." .. RoachHook.Helpers.GetPlayerListID(plr)]) then return end
+
+    local resolver_pitches = {
+        nil,
+        -89,
+        0,
+        89,
+    }
+    local resolver_yaws = {
+        [1] = plr:EyeAngles().y,                            // Disabled
+        [2] = plr:EyeAngles().y - 90,                       // Right
+        [3] = plr:EyeAngles().y + 90,                       // Left
+        [4] = plr:EyeAngles().y + 180,                      // Backwards
+        [5] = 0,                                            // Forwards
+        [6] = 0,                                            // WallDetection
+        [7] = 0,                                            // Reverse WallDetection
+        [8] = 0,                                            // AtTargets Backwards
+        [9] = 0,                                            // AtTargets Forwards
+        [10] = 0,                                           // AtTargets Sideways
+        [11] = plr:EyeAngles().y + math.random(-180, 180),  // Random Yaw
+        [12] = nil,                                         // Random Mode
+    }
+
+    local iPitch = RoachHook.Config["misc.b_resolve.i_pitch." .. RoachHook.Helpers.GetPlayerListID(plr)]
+    local iYaw = RoachHook.Config["misc.b_resolve.i_yaw." .. RoachHook.Helpers.GetPlayerListID(plr)]
+
+    if(iYaw == 6) then  // Wall Detection
+        resolver_yaws[6] = WallDetectionPlayer(plr)
+        if(resolver_yaws[6]) then
+            debugoverlay.Line(plr:GetPos(), plr:GetPos() + Angle(0, resolver_yaws[6], 0):Forward() * 26, 1.0, color_white, true)
+        end
+    elseif(iYaw == 7) then  // Reverse WallDetection
+        local wd = WallDetectionPlayer(plr)
+        if(wd) then
+            resolver_yaws[6] = math.NormalizeAngle(wd + 180)
+        end
+    elseif(iYaw == 12) then
+        iYaw = math.random(2, 10)
+    end
+
+    local plrNewPitch = iPitch > 1 && resolver_pitches[iPitch] || plr:EyeAngles().x
+    local plrNewYaw = resolver_yaws[iYaw] || plr:EyeAngles().y
+
+    RotatePlayer(plr, plrNewPitch, plrNewYaw)
+end
+
+local function RunSandboxAnims(ply, velocity, maxseqgroundspeed)
+    local len = velocity:Length()
+	local movement = 1.0
+
+	if ( len > 0.2 ) then
+		movement = ( len / maxseqgroundspeed )
+	end
+
+	local rate = math.min( movement, 2 )
+
+	-- if we're under water we want to constantly be swimming..
+	if ( ply:WaterLevel() >= 2 ) then
+		rate = math.max( rate, 0.5 )
+	elseif ( !ply:IsOnGround() && len >= 1000 ) then
+		rate = 0.1
+	end
+
+	ply:SetPlaybackRate( rate )
+
+	-- We only need to do this clientside..
+	if ( CLIENT ) then
+		if ( ply:InVehicle() ) then
+			--
+			-- This is used for the 'rollercoaster' arms
+			--
+			local Vehicle = ply:GetVehicle()
+			local Velocity = Vehicle:GetVelocity()
+			local fwd = Vehicle:GetUp()
+			local dp = fwd:Dot( Vector( 0, 0, 1 ) )
+
+			ply:SetPoseParameter( "vertical_velocity", ( dp < 0 && dp || 0 ) + fwd:Dot( Velocity ) * 0.005 )
+
+			-- Pass the vehicles steer param down to the player
+			local steer = Vehicle:GetPoseParameter( "vehicle_steer" )
+			steer = steer * 2 - 1 -- convert from 0..1 to -1..1
+			if ( Vehicle:GetClass() == "prop_vehicle_prisoner_pod" ) then steer = 0 ply:SetPoseParameter( "aim_yaw", math.NormalizeAngle( ply:GetAimVector():Angle().y - Vehicle:GetAngles().y - 90 ) ) end
+			ply:SetPoseParameter( "vehicle_steer", steer )
+
+		end
+		GAMEMODE:GrabEarAnimation( ply )
+		GAMEMODE:MouthMoveAnimation( ply )
+	end
+end
+
+function GAMEMODE:UpdateAnimation(plr, velocity, maxSeqGroundSpeed)
+    local hResult = self.BaseClass.UpdateAnimation(self, plr, velocity, maxSeqGroundSpeed)
+
+    if(plr == LocalPlayer()) then
+        Taunter(plr)
+        return hResult
+    end
+    
+    RoachHook.Features.Ragebot.BoneData[plr:EntIndex()] = {}
+    RoachHook.Features.Ragebot.AnimFix(plr, velocity, maxSeqGroundSpeed)
+    RunSandboxAnims(plr, velocity, maxSeqGroundSpeed)
+    return hResult;
+end

@@ -572,6 +572,10 @@ RoachHook.Helpers.CanFire = function()
     if(!pWeapon.Clip1 || !pWeapon.GetMaxClip1) then return false end
     if(pWeapon:Clip1() <= 0 && pWeapon:GetMaxClip1() > 0) then return false end
     
+  if(not RoachHook.ServerTime) then
+      return false;
+  end
+
     return pWeapon:GetNextPrimaryFire() <= RoachHook.ServerTime
 end
 RoachHook.Helpers.IsTraitor = function(plr)

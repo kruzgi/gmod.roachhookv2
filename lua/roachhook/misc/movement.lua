@@ -71,6 +71,10 @@ local function AutostraferDirectional(cmd)
             return
         end
 
+        if(velocity:Length2D() <= 15.0 && !(forwardmove != 0 || sidemove != 0)) then
+            return
+        end
+
         local flip = cmd:TickCount() % 2 == 0
 
         local turn_direction_modifier = flip && 1.0 || -1.0

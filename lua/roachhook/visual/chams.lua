@@ -11,10 +11,17 @@ local overlay = {
     Material("models/props_combine/portalball001_sheet"),
 }
 
-hook.Add("PrePlayerDraw", "LocalPlayerChams", function(plr)
+hook.Add("PrePlayerDraw", "LocalPlayerChams", function(plr, flags)
     if(plr != RoachHook.Detour.LocalPlayer()) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     if(RoachHook.DrawingFake) then return end
-    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then return end
 
     if(RoachHook.Config["player.local_chams.b_enable"]) then
         local clr = RoachHook.Config["player.local_chams.b_enable.color"]
@@ -26,9 +33,17 @@ hook.Add("PrePlayerDraw", "LocalPlayerChams", function(plr)
         render.SetBlend(clr.a / 255)
     end
 end)
-hook.Add("PostPlayerDraw", "LocalPlayerChamsFix", function(plr)
+hook.Add("PostPlayerDraw", "LocalPlayerChamsFix", function(plr, flags)
     if(plr != RoachHook.Detour.LocalPlayer()) then return end
     if(RoachHook.DrawingFake) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
 
     render.SetColorModulation(1, 1, 1)
     render.SetBlend(1)
@@ -75,7 +90,7 @@ local function RenderChams()
             
             local anglesDiff = math.abs(RoachHook.AntiAimData.real.y - RoachHook.AntiAimData.fake.y)
             if(anglesDiff > 5) then
-                plr:InvalidateBoneCache()
+                -- plr:InvalidateBoneCache()
     
                     plr:SetPoseParameter("aim_yaw", 0)
                     plr:SetPoseParameter("head_yaw", 0)
@@ -100,7 +115,7 @@ local function RenderChams()
                     plr:SetPoseParameter("move_y", -velocity.y)
                     
                     if(RoachHook.IsFakeWalking) then
-                        plr:InvalidateBoneCache()
+                        -- plr:InvalidateBoneCache()
 
                             plr:SetPoseParameter("move_x", 0)
                             plr:SetPoseParameter("move_y", 0)
@@ -109,9 +124,9 @@ local function RenderChams()
                                 plr:SetCycle(RoachHook.SendData.cycle)
                             end
 
-                        plr:SetupBones()
+                        -- plr:SetupBones()
                     elseif(RoachHook.SendData.velocity && RoachHook.SendData.cycle) then
-                        plr:InvalidateBoneCache()
+                        -- plr:InvalidateBoneCache()
 
                             local vel = RoachHook.SendData.velocity
                             local velScale = math.Clamp(vel:Length2D() / 60, 0, 1)
@@ -122,12 +137,12 @@ local function RenderChams()
 
                             plr:SetCycle(RoachHook.SendData.cycle)
 
-                        plr:SetupBones()
+                        -- plr:SetupBones()
                     end
     
                     plr:SetRenderAngles(Angle(0, RoachHook.AntiAimData.fake.y, 0))
                     
-                plr:SetupBones()
+                -- plr:SetupBones()
                 
                 RoachHook.DrawingFake = true
     
@@ -152,7 +167,7 @@ local function RenderChams()
                 
                 RoachHook.DrawingFake = false
 
-                RoachHook.Features.Misc.AnimationFix(plr)
+                -- RoachHook.Features.Misc.AnimationFix(plr)
             end
         end
 
@@ -307,6 +322,14 @@ local function RenderChams()
 end
 hook.Add("RenderScreenspaceEffects", "Chams", function()
     if(RoachHook.Config["misc.b_obs_proof"]) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     
     for k,v in ipairs(RoachHook.RenderScreenspaceEffectsHook) do v() end
     RenderChams()
@@ -314,6 +337,14 @@ end)
 
 RoachHook.OverlayHook[#RoachHook.OverlayHook + 1] = function()
     if(!RoachHook.Config["misc.b_obs_proof"] || gui.IsGameUIVisible()) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     
     RenderChams()
 end

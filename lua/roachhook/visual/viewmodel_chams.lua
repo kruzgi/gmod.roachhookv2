@@ -16,6 +16,14 @@ hook.Add("PreDrawViewModel", "viewmodelchams", function(vm,plr, weapon)
         return
     end
     if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
 
     local clr = RoachHook.Config["player.b_viewmodel_chams.color"]
 
@@ -25,6 +33,14 @@ hook.Add("PreDrawViewModel", "viewmodelchams", function(vm,plr, weapon)
     render.SetBlend(clr.a / 255)
 end)
 hook.Add("PostDrawViewModel", "viewmodelchams", function()
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     render.SetColorModulation(1, 1, 1)
     render.MaterialOverride(RoachHook.Materials.chams.none)
     render.SetBlend(1)
@@ -32,6 +48,14 @@ hook.Add("PostDrawViewModel", "viewmodelchams", function()
 end)
 
 hook.Add("PreDrawPlayerHands", "handchams", function()
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     if(!RoachHook.Config["player.b_hand_chams"]) then
         render.SuppressEngineLighting(false)
         render.SetColorModulation(1, 1, 1)
@@ -50,6 +74,14 @@ hook.Add("PreDrawPlayerHands", "handchams", function()
     render.SetBlend(clr.a / 255)
 end)
 hook.Add("PostDrawPlayerHands", "handchams", function()
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     render.SetColorModulation(1, 1, 1)
     render.MaterialOverride(RoachHook.Materials.chams.none)
     render.SetBlend(1)

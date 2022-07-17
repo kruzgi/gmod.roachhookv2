@@ -17,7 +17,7 @@ local hitbox = {
         "ValveBiped.Bip01_Spine",
         "ValveBiped.Bip01_Spine1",
         "ValveBiped.Bip01_Spine2",
-        "ValveBiped.Bip01_Spine3",
+        "ValveBiped.Bip01_Spine3",  -- some of the models doesn't have these
         "ValveBiped.Bip01_Spine4",
     },
     ["arms"] = {
@@ -41,6 +41,8 @@ local hitbox = {
     ["feet"] = {
         "ValveBiped.Bip01_L_Foot",
         "ValveBiped.Bip01_R_Foot",
+        "ValveBiped.Bip01_L_Toe0",  -- some of the models doesn't have these
+        "ValveBiped.Bip01_R_Toe0",
     },
 }
 function Ragebot:GetHitboxes()
@@ -136,6 +138,38 @@ local function SWCSAutowall(p0, p1, plr)
     // maybe one day lmao
     return false
 end
+
+local function GetBoneData(plr, bone)
+    if(isstring(bone)) then
+        bone = plr:LookupBone(bone)
+    end
+    if(!bone) then
+        return nil
+    end
+
+    if(RoachHook.Features.Ragebot.BoneData && RoachHook.Features.Ragebot.BoneData[plr:EntIndex()] && RoachHook.Features.Ragebot.BoneData[plr:EntIndex()][bone]) then
+        return RoachHook.Features.Ragebot.BoneData[plr:EntIndex()][bone]
+    end
+
+    -- print("Couldn't get bone data [" .. bone .. "], generating new input...")
+    
+    local mins, maxs = Vector(), Vector()
+
+    local hitbox = RoachHook.Helpers.BoneToHitbox(plr, bone)
+    if(hitbox) then
+        mins, maxs = plr:GetHitBoxBounds(hitbox, 0)
+    end
+
+    local pos, angle = plr:GetBonePosition(bone)
+
+    return {
+        pos = pos,
+        angle = angle,
+        mins = mins,
+        maxs = maxs
+    }
+end
+
 function Ragebot:CanHit(plr)
     local hitboxes = Ragebot:GetHitboxes()
     local me = LocalPlayer()
@@ -147,24 +181,30 @@ function Ragebot:CanHit(plr)
         local hitbox = hitboxes[h]
         if(!hitbox) then continue end
 
-        local bone = plr:LookupBone(hitbox)
-        if(!bone) then continue end
+        -- local bone = plr:LookupBone(hitbox)
+        -- if(!bone) then continue end
 
-        local pos, angle = plr:GetBonePosition(bone)
-        if(!pos || !angle) then continue end
+        -- local pos, angle = plr:GetBonePosition(bone)
+        -- if(!pos || !angle) then continue end
+
+        local boneData = GetBoneData(plr, hitbox)
+        if(!boneData) then
+            -- print("[hitbox] error occured while trying to get bone data of: " .. tostring(hitbox))
+            continue
+        end
 
         local trc = util.TraceLine({
             start = eye,
-            endpos = pos,
+            endpos = boneData.pos,
             filter = me,
             mask = MASK_SHOT,
         })
 
-        if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then return pos end
+        if((trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") || trc.Fraction >= 0.999) then return boneData.pos end
 
         if(bAutowall) then
-            if(RoachHook.Helpers.IsSWCS(weapon) && SWCSAutowall(eye, pos, plr)) then return pos end
-            if(SimpleAutowall(eye, pos, plr)) then return pos end
+            if(RoachHook.Helpers.IsSWCS(weapon) && SWCSAutowall(eye, boneData.pos, plr)) then return boneData.pos end
+            if(SimpleAutowall(eye, boneData.pos, plr)) then return boneData.pos end
         end
     end
     
@@ -178,31 +218,37 @@ function Ragebot:CanHit(plr)
         local hitbox = hitboxes[h]
         if(!hitbox) then continue end
 
-        local bone = plr:LookupBone(hitbox)
-        if(!bone) then continue end
+        -- local bone = plr:LookupBone(hitbox)
+        -- if(!bone) then continue end
 
-        local pos, angle = plr:GetBonePosition(bone)
-        if(!pos || !angle) then continue end
+        -- local pos, angle = plr:GetBonePosition(bone)
+        -- if(!pos || !angle) then continue end
 
-        local hitbox = RoachHook.Helpers.BoneToHitbox(plr, bone)
-        if(!hitbox) then continue end
+        -- local hitbox = RoachHook.Helpers.BoneToHitbox(plr, bone)
+        -- if(!hitbox) then continue end
 
-        local hMins, hMaxs = plr:GetHitBoxBounds(hitbox, 0)
-        if(!hMins || !hMaxs) then continue end
+        -- local hMins, hMaxs = plr:GetHitBoxBounds(hitbox, 0)
+        -- if(!hMins || !hMaxs) then continue end
+
+        local boneData = GetBoneData(plr, hitbox)
+        if(!boneData) then
+            -- print("[multipoint] error occured while trying to get bone data of: " .. tostring(hitbox))
+            continue
+        end
 
         local lowestLen = 128
         local bestPos = nil
-        for x=hMins.x * multipointScale, hMaxs.x * multipointScale, ((hMaxs.x - hMins.x) / multipointScans) do
-            for y=hMins.y * multipointScale, hMaxs.y * multipointScale, ((hMaxs.y - hMins.y) / multipointScans) do
-                for z=hMins.z * multipointScale, hMaxs.z * multipointScale, ((hMaxs.z - hMins.z) / multipointScans) do
+        for x=boneData.mins.x * multipointScale, boneData.maxs.x * multipointScale, ((boneData.maxs.x - boneData.mins.x) / multipointScans) do
+            for y=boneData.mins.y * multipointScale, boneData.maxs.y * multipointScale, ((boneData.maxs.y - boneData.mins.y) / multipointScans) do
+                for z=boneData.mins.z * multipointScale, boneData.maxs.z * multipointScale, ((boneData.maxs.z - boneData.mins.z) / multipointScans) do
                     local pointPos = Vector(x, y, z)
-                    pointPos:Rotate(angle)
+                    pointPos:Rotate(boneData.angle)
                     local pointLen = pointPos:Length()
                     if(pointLen >= lowestLen) then
                         continue
                     end
                     
-                    local multipoint_pos = pos + pointPos                    
+                    local multipoint_pos = boneData.pos + pointPos                    
                     local trc = util.TraceLine({
                         start = eye,
                         endpos = multipoint_pos,
@@ -210,7 +256,7 @@ function Ragebot:CanHit(plr)
                         mask = MASK_SHOT,
                     })
         
-                    if(trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") then
+                    if((trc.Hit && IsValid(trc.Entity) && trc.Entity:GetClass() == "player") || trc.Fraction >= 0.999) then
                         lowestLen = pointLen
                         bestPos = multipoint_pos
                         continue
@@ -262,7 +308,7 @@ function Ragebot.Targetting:Cycle()
         local plr = Ragebot.Targets[i]
         if(!plr) then continue end
 
-        plr:SetupBones()
+        -- RoachHook.Features.Ragebot.AnimFix(plr)
         local pos = Ragebot:CanHit(plr)
         if(pos) then
             local angle = (pos - myEye):Angle()
@@ -290,7 +336,7 @@ function Ragebot.Targetting:Health()
         local plr = Ragebot.Targets[i]
         if(!plr) then continue end
 
-        plr:SetupBones()
+        -- plr:SetupBones()
         local pos = Ragebot:CanHit(plr)
         if(pos) then
             local angle = (pos - myEye):Angle()
@@ -320,7 +366,7 @@ function Ragebot.Targetting:FOV()
         local plr = Ragebot.Targets[i]
         if(!plr) then continue end
 
-        plr:SetupBones()
+        -- plr:SetupBones()
         local pos = Ragebot:CanHit(plr)
         if(pos) then
             local angle = (pos - myEye):Angle()
@@ -354,15 +400,15 @@ end
 function Ragebot:GetTarget()
     local iTargettingMethod = RoachHook.Config["ragebot.targetting"]
 
-    if(iTargettingMethod == 1) then
+    -- if(iTargettingMethod == 1) then
         return Ragebot.Targetting:Cycle()
-    elseif(iTargettingMethod == 2) then
-        return Ragebot.Targetting:Distance()
-    elseif(iTargettingMethod == 3) then
-        return Ragebot.Targetting:Health()
-    elseif(iTargettingMethod == 4) then
-        return Ragebot.Targetting:FOV()
-    end
+    -- elseif(iTargettingMethod == 2) then
+    --     return Ragebot.Targetting:Distance()
+    -- elseif(iTargettingMethod == 3) then
+    --     return Ragebot.Targetting:Health()
+    -- elseif(iTargettingMethod == 4) then
+    --     return Ragebot.Targetting:FOV()
+    -- end
 end
 
 local function RagebotCanFire()
@@ -485,6 +531,100 @@ local function SWCSAutoRevolver(cmd)
     end
 end
 
+local function GenerateShotMatrix(plr, pointHit)
+    local hitboxData = {}
+    for _type, hitboxes in pairs(hitbox) do
+        for id, hitboxName in ipairs(hitboxes) do
+            local bone = plr:LookupBone(hitboxName)
+            if(!bone) then continue end
+
+            hitboxData[#hitboxData + 1] = GetBoneData(plr, bone)
+        end
+    end
+
+    
+    RoachHook.ShotMatrixes[#RoachHook.ShotMatrixes + 1] = {
+        start = LocalPlayer():GetShootPos(),
+        hit = pointHit,
+        hitbox = hitboxData,
+        color = Color(RoachHook.Config["ragebot.b_shot_matrix.color"].r, RoachHook.Config["ragebot.b_shot_matrix.color"].g, RoachHook.Config["ragebot.b_shot_matrix.color"].b, RoachHook.Config["ragebot.b_shot_matrix.color"].a),
+        timeLeft = RoachHook.Config["ragebot.b_shot_matrix.fl_time"],
+    }
+end
+
+local function SWCSHitChance(angles, ent, chance)
+    local weapon = LocalPlayer():GetActiveWeapon();
+
+	if (!weapon) then
+		return false;
+    end
+
+	local forward, right, up = angles:Forward(), angles:Right(), angles:Up();
+	local src = LocalPlayer():EyePos();
+
+	local cHits = 0;
+	local cNeededHits = math.floor(256.0 * (chance / 100.0));
+
+	weapon:UpdateAccuracyPenalty();
+	local weap_spread = weapon:GetSpread();
+	local weap_inaccuracy = weapon:GetInaccuracy();
+
+	for i=0, 255 do
+		local a = g_ursRandom:RandomFloat(0.0, 1.0);
+		local b = g_ursRandom:RandomFloat(0.0, 2.0 * math.pi);
+		local c = g_ursRandom:RandomFloat(0.0, 1.0);
+		local d = g_ursRandom:RandomFloat(0.0, 2.0 * math.pi);
+
+		local inaccuracy = a * weap_inaccuracy;
+		local spread = c * weap_spread;
+
+		if (weapon:GetClass() == "weapon_swcs_revolver") then
+			a = 1.0 - c * c;
+        end
+
+		local spreadView = Vector((math.cos(b) * inaccuracy) + (math.cos(d) * spread), (math.sin(b) * inaccuracy) + (math.sin(d) * spread), 0), direction;
+
+        local direction = Vector()
+		direction.x = forward.x + (spreadView.x * right.x) + (spreadView.y * up.x);
+		direction.y = forward.y + (spreadView.x * right.y) + (spreadView.y * up.y);
+		direction.z = forward.z + (spreadView.x * right.z) + (spreadView.y * up.z);
+		direction:Normalize();
+
+		local viewAnglesSpread = direction:Angle();
+		-- Math::VectorAngles(direction, up, viewAnglesSpread);
+		-- Math::ClampAngles(viewAnglesSpread);
+
+		local viewForward = viewAnglesSpread:Forward();
+		viewForward:Normalize();
+
+		viewForward = src + (viewForward * weapon:GetRange());
+
+        local tr = util.TraceLine({
+            start = src,
+            endpos = viewForward,
+            mask = MASK_SHOT,
+            collisiongroup = COLLISION_GROUP_PLAYER,
+            ignoreworld = true,
+            filter = LocalPlayer()
+        })
+
+		if (tr.Entity == ent) then
+			cHits = cHits + 1;
+        end
+
+        -- debugoverlay.Line(tr.StartPos, tr.HitPos, engine.TickInterval() * 2.0, color_white, true)
+
+		if (math.floor(((cHits) / 256.0) * 100.0) >= chance) then
+			return true;
+        end
+
+		if ((256 - i + cHits) < cNeededHits) then
+			return false;
+        end
+    end
+	return false;
+end
+
 RoachHook.Features.Ragebot.Aimbot = function(cmd)
     if(!RoachHook.Config["ragebot.b_enable"]) then return end
 
@@ -493,7 +633,7 @@ RoachHook.Features.Ragebot.Aimbot = function(cmd)
     local pos, plr = Ragebot:GetTarget()
     if(!pos || !plr) then return end
     
-    if(RagebotCanFire() && ((bDidSwitch && !bSendPacket) || LocalPlayer():GetActiveWeapon():GetClass() == "weapon_physgun")) then
+    if(RagebotCanFire() && bDidSwitch && !bSendPacket) then
         local angle = ((pos + GetPredictedVector(plr)) - LocalPlayer():EyePos()):Angle()
         local weapon = LocalPlayer():GetActiveWeapon()
         if(RoachHook.Helpers.IsSWCS(weapon)) then
@@ -508,17 +648,19 @@ RoachHook.Features.Ragebot.Aimbot = function(cmd)
                 return
             end
 
-            if(1 / weapon:GetInaccuracy() < RoachHook.Config["swcs.i_hc"]) then
+            if(!SWCSHitChance(angle, plr, RoachHook.Config["swcs.i_hc"])) then
                 return
             end
         end
         
         cmd:SetViewAngles(angle)
         cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
-        -- debugoverlay.Cross(pos, 8, 3.0, color_white, true)
+        GenerateShotMatrix(plr, pos)
+        -- debugoverlay.Cross(pos, 8, engine.TickInterval() * 2.0, color_white, true)
         if(!RoachHook.Config["ragebot.b_silent"]) then
             RoachHook.SilentAimbot = angle
         end
+
 
         -- if(RoachHook.Config["misc.b_logs.logs"] && RoachHook.Config["misc.b_logs.logs"][2]) then
         --     RoachHook.Helpers.AddLog({

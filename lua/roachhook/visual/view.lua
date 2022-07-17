@@ -40,6 +40,14 @@ RoachHook.Detour.hook.Add("Think", "Force3DSkybox", function()
     if(r_3dsky:GetInt() == 0) then RunConsoleCommand("r_3dsky", "1") end
 end)
 RoachHook.Detour.hook.Add("PreDrawSkyBox", "HideSkybox", function()
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
     if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
     if(!RoachHook.Config["visual.removals"]) then return end
     if(!RoachHook.Config["visual.removals"][2]) then return end
@@ -49,6 +57,14 @@ end)
 
 RoachHook.Detour.hook.Add("CalcViewModelView", "CustomViewmodel", function(wpn, vm, oPos, oAng, pos, ang)
     if(RoachHook.Config["misc.b_obs_proof"] && RoachHook.Config["misc.b_obs_proof.b_auto_hide"]) then return end
+    if(!system.HasFocus() && RoachHook.Config["misc.b_alt_tab_hide_visuals"]) then
+        for k,v in ipairs(player.GetAll()) do
+            v:SetColor(color_white)
+            v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+        end
+
+        return
+    end
 
     if(RoachHook.Config["visual.removals"] && RoachHook.Config["visual.removals"][4] && RoachHook.Config["fakelag.b_fakeduck"] && RoachHook.PressedVars["fakelag.b_fakeduck.key"]) then
         pos.z = RoachHook.Detour.LocalPlayer():GetPos().z + RoachHook.Detour.LocalPlayer():GetViewOffset().z
